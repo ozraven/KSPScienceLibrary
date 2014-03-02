@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KSPScienceLibrary
 {
-    public class Class1
+    public class KSPScienceLibrary
     {
     }
 }
