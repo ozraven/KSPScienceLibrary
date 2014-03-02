@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using UnityEngine;
 
-namespace KSPScienceLibrary
+
+[KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
+public class KSPScienceLibrary : MonoBehaviour
 {
-    public class KSPScienceLibrary
-    {
-    }
 }
