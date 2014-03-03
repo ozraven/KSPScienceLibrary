@@ -38,6 +38,10 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Toolbar">
+      <HintPath>..\..\..\game\KSP_win\GameData\000_Toolbar\Toolbar.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\game\KSP_win\KSP_Data\Managed\UnityEngine.dll</HintPath>
       <Private>False</Private>
@@ -45,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experiment.cs" />
+    <Compile Include="KSPScienceButton.cs" />
     <Compile Include="KSPScienceLibrary.cs" />
     <Compile Include="LibraryUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Toolbar;
 using UnityEngine;
 
 
 [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
 public class KSPScienceLibrary : MonoBehaviour
 {
+    public static IButton toolbarButton;
     private static Rect windowPosition = new Rect(5, 20, Screen.width - 10, Screen.height - 80);
     private static GUIStyle windowStyle;
     public static bool drawWindow = false;
@@ -39,7 +41,7 @@ public class KSPScienceLibrary : MonoBehaviour
         windowStyle.stretchHeight = true;
         windowStyle.stretchWidth = true;
 
-        drawWindow = true;
+        drawWindow = false;
         selectedBody = "All";
         selectedExperiments = dataOutputList;
     }
@@ -63,7 +65,9 @@ public class KSPScienceLibrary : MonoBehaviour
 
     private void OnDraw()
     {
-        
+        if (toolbarButton != null)
+            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2" : "ScienceLibrary/img1";
+
         if (!lastdrawWindow && drawWindow)
         {
             GetSciData();
@@ -248,7 +252,7 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.EndVertical();
         GUILayout.Space(20);
         GUILayout.BeginVertical();
-        GUILayout.Label("LOG");
+        GUILayout.Label("Library");
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
@@ -452,6 +456,7 @@ public class KSPScienceLibrary : MonoBehaviour
             if (experimentSecondText.Contains(experimentSituation.ToString()))
                 return experimentSituation;
         throw new Exception("Error in FindExperimentSituation: Can't find situation in '" + experimentSecondText + "'");
+        //return null;
     }
 
     public static string FindExperimentBody(string experimentSecondText)
