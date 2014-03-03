@@ -44,7 +44,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Experiment.cs" />
     <Compile Include="KSPScienceLibrary.cs" />
+    <Compile Include="LibraryUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
