@@ -66,7 +66,7 @@ public class KSPScienceLibrary : MonoBehaviour
     private void OnDraw()
     {
         if (toolbarButton != null)
-            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2" : "ScienceLibrary/img1";
+            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2l" : "ScienceLibrary/img1l";
 
         if (!lastdrawWindow && drawWindow)
         {

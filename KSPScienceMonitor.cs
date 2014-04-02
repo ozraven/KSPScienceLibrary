@@ -51,7 +51,7 @@ public class KSPScienceMonitor : MonoBehaviour
     private void OnDraw()
     {
         if (toolbarButton != null)
-            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2" : "ScienceLibrary/img1";
+            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2m" : "ScienceLibrary/img1m";
         if (drawWindow)
             windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
 

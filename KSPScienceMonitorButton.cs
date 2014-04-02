@@ -13,7 +13,7 @@ class KSPScienceMonitorButton : MonoBehaviour
     internal KSPScienceMonitorButton()
     {
         toolbarKSPScienceMonitorButton = ToolbarManager.Instance.add("ScienceLibrary", "toolbarKSPScienceMonitorButton");
-        toolbarKSPScienceMonitorButton.TexturePath = "ScienceLibrary/img1";
+        toolbarKSPScienceMonitorButton.TexturePath = "ScienceLibrary/img1m";
         toolbarKSPScienceMonitorButton.ToolTip = "ScienceLibrary Monitor";
         toolbarKSPScienceMonitorButton.Visible = true;
         toolbarKSPScienceMonitorButton.OnClick += KSPScienceMonitorButton_OnClick;
