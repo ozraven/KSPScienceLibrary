@@ -13,9 +13,9 @@ public class KSPScienceLibrary : MonoBehaviour
     private static GUIStyle windowStyle;
     public static bool drawWindow = false;
     private List<string> allExperimentTypes = new List<string>();
-    private bool autoDeploy = false;
-    private CelestialBody[] bodies = null;
-    private Dictionary<string, CelestialBody> bodiesNames = null;
+    //private bool autoDeploy = false;
+    //private CelestialBody[] bodies = null;
+    //private Dictionary<string, CelestialBody> bodiesNames = null;
     private List<Experiment> dataOutputList;
     private bool lastdrawWindow;
 

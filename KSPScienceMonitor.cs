@@ -108,6 +108,20 @@ public class KSPScienceMonitor : MonoBehaviour
             {
                 if (!idsList.ContainsKey("evaReport"))
                     idsList.Add("evaReport", new Tupel<int, int>(0, 0));
+
+
+                ModuleAsteroid[] asteroids = MonoBehaviour.FindObjectsOfType<ModuleAsteroid>();
+                foreach (ModuleAsteroid asteroid in asteroids)
+                {
+                    Vector3 destination3 = asteroid.gameObject.transform.position - FlightGlobals.ActiveVessel.gameObject.transform.position;
+                    float unfocusedRange = asteroid.Events["TakeSampleEVAEvent"].unfocusedRange;
+                    unfocusedRange *= unfocusedRange;
+                    if (destination3.sqrMagnitude < unfocusedRange)
+                    {
+                        if (!idsList.ContainsKey("asteroidSample"))
+                            idsList.Add("asteroidSample", new Tupel<int, int>(0, 0));
+                    }
+                }
             }
             ExperimentsNow = new List<Experiment>();
 
@@ -155,7 +169,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     {
                         //                    style.normal.textColor = Color.green;
                         //                    GUILayout.Label(tmpstr, style);
-                        ExperimentsNow.Add(new Experiment(tmpstr, 0, 0, thisBody.name, firstExperimentId));
+                        ExperimentsNow.Add(new Experiment(tmpstr, 0, experiment.baseValue * experiment.dataScale, thisBody.name, firstExperimentId));
 
                         //ExperimentsNow.Add(tmpstr);
                         if (autoDeploy)

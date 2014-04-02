@@ -51,6 +51,8 @@
     <Compile Include="Experiment.cs" />
     <Compile Include="KSPScienceButton.cs" />
     <Compile Include="KSPScienceLibrary.cs" />
+    <Compile Include="KSPScienceMonitor.cs" />
+    <Compile Include="KSPScienceMonitorButton.cs" />
     <Compile Include="LibraryUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
