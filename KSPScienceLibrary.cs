@@ -225,9 +225,9 @@ public class KSPScienceLibrary : MonoBehaviour
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
-                GUILayout.Label(experiment.type, style);
+                GUILayout.Label(experiment.FirstIdType, style);
             else
-                GUILayout.Label(experiment.type);
+                GUILayout.Label(experiment.FirstIdType);
         }
         GUILayout.EndVertical();
         GUILayout.BeginVertical();
@@ -367,7 +367,7 @@ public class KSPScienceLibrary : MonoBehaviour
         var selectedExperimentsTemp = new List<Experiment>();
         foreach (Experiment experiment in input)
         {
-            if (experiment.type == type)
+            if (experiment.FirstIdType == type)
             {
                 selectedExperimentsTemp.Add(experiment);
             }
@@ -380,9 +380,11 @@ public class KSPScienceLibrary : MonoBehaviour
         var selectedExperimentTypesTemp = new List<string>();
         foreach (Experiment experiment in dataOutputList)
         {
-            if (!selectedExperimentTypesTemp.Contains(experiment.type))
+            if (selectedExperimentTypesTemp.Contains(experiment.FirstIdType))
             {
-                selectedExperimentTypesTemp.Add(experiment.type);
+            } else
+            {
+                selectedExperimentTypesTemp.Add(experiment.FirstIdType);
             }
         }
         selectedExperimentTypesTemp.Sort();
@@ -435,10 +437,10 @@ public class KSPScienceLibrary : MonoBehaviour
     private int SortByType(Experiment o1, Experiment o2)
     {
         if (o1.earned == 0 && o2.earned == 0)
-            return o1.type.CompareTo(o2.type);
+            return o1.FirstIdType.CompareTo(o2.FirstIdType);
         if (o1.earned == 0 || o2.earned == 0)
             return o2.earned.CompareTo(o1.earned);
-        return o1.type.CompareTo(o2.type);
+        return o1.FirstIdType.CompareTo(o2.FirstIdType);
     }
 
     public static string FindBiome(string experimentSecondText, ExperimentSituations situation)

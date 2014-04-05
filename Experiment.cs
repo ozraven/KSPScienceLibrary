@@ -9,15 +9,17 @@ public struct Experiment
     public double earned;
     public double remain;
     public string body;
-    public string type;
+    public string FirstIdType;
+    public bool onShip;
 
-    public Experiment(string eFullName, double eEarned, double eRemain, string eCelestialbody, string eFirstIdType)
+    public Experiment(string eFullName, double eEarned, double eRemain, string eCelestialbody, string eFirstIdType, bool eOnShip = false)
     {
         fullName = eFullName;
         earned = eEarned;
         remain = eRemain;
         body = eCelestialbody;
-        type = eFirstIdType;
+        FirstIdType = eFirstIdType;
+        onShip = eOnShip;
     }
 
     public override string ToString()
