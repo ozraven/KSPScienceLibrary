@@ -8,7 +8,7 @@ using UnityEngine;
 [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
 public class KSPScienceLibrary : MonoBehaviour
 {
-    public static IButton toolbarButton;
+    public static KSPScienceButton toolbarButton;
     private static Rect windowPosition = new Rect(5, 20, Screen.width - 10, Screen.height - 80);
     private static GUIStyle windowStyle;
     public static bool drawWindow = false;
@@ -48,8 +48,8 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public void OnDestroy()
     {
-        RenderingManager.RemoveFromPostDrawQueue(0, OnDraw);
         print("Destroy Science Window");
+        RenderingManager.RemoveFromPostDrawQueue(0, OnDraw);
     }
 
     public void Update()
@@ -66,7 +66,7 @@ public class KSPScienceLibrary : MonoBehaviour
     private void OnDraw()
     {
         if (toolbarButton != null)
-            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2l" : "ScienceLibrary/img1l";
+            toolbarButton.UpdateIcon(drawWindow);
 
         if (!lastdrawWindow && drawWindow)
         {

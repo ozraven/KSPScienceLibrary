@@ -1,29 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Toolbar;
 using UnityEngine;
-
+using Object = UnityEngine.Object;
 
 [KSPAddon(KSPAddon.Startup.Flight, false)]
 public class KSPScienceMonitor : MonoBehaviour
 {
-    public static IButton toolbarButton;
+    public static KSPScienceMonitorButton toolbarButton;
     private static Rect windowPosition = new Rect(0, 0, 600, 200);
     private static GUIStyle windowStyle = null;
 
     public static bool drawWindow = false;
+    private List<Experiment> ExperimentsNow = new List<Experiment>();
     //
-    private bool autoDeploy = false;
-    private Vector2 scrollVector2;
-    Dictionary<string, Tupel<int, int>> idsList = new Dictionary<string, Tupel<int, int>>();
-    List<ModuleScienceExperiment> modules = new List<ModuleScienceExperiment>();
-    //List<string> ExperimentsNow = new List<string>();
-    List<Experiment> ExperimentsNow = new List<Experiment>();
+    private bool autoDeploy;
+    private Dictionary<string, Tupel<int, int>> idsList = new Dictionary<string, Tupel<int, int>>();
     //
     private float lateUpdateTimer;
+    private List<ModuleScienceExperiment> modules = new List<ModuleScienceExperiment>();
     private bool resizingWindow;
+    private Vector2 scrollVector2;
 
     public void Awake()
     {
@@ -51,7 +47,7 @@ public class KSPScienceMonitor : MonoBehaviour
     private void OnDraw()
     {
         if (toolbarButton != null)
-            toolbarButton.TexturePath = drawWindow ? "ScienceLibrary/img2m" : "ScienceLibrary/img1m";
+            toolbarButton.UpdateIcon(drawWindow);
         if (drawWindow)
             windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
 
@@ -110,7 +106,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     idsList.Add("evaReport", new Tupel<int, int>(0, 0));
 
 
-                ModuleAsteroid[] asteroids = MonoBehaviour.FindObjectsOfType<ModuleAsteroid>();
+                ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
                 foreach (ModuleAsteroid asteroid in asteroids)
                 {
                     Vector3 destination3 = asteroid.gameObject.transform.position - FlightGlobals.ActiveVessel.gameObject.transform.position;
@@ -130,7 +126,9 @@ public class KSPScienceMonitor : MonoBehaviour
             if (FlightGlobals.ActiveVessel.landedAt != string.Empty)
                 biome += FlightGlobals.ActiveVessel.landedAt;
             else
-                biome += FlightGlobals.ActiveVessel.mainBody.BiomeMap.GetAtt(FlightGlobals.ActiveVessel.latitude * Math.PI / 180d, FlightGlobals.ActiveVessel.longitude * Math.PI / 180d).name;
+                biome +=
+                    FlightGlobals.ActiveVessel.mainBody.BiomeMap.GetAtt(FlightGlobals.ActiveVessel.latitude*Math.PI/180d,
+                        FlightGlobals.ActiveVessel.longitude*Math.PI/180d).name;
             List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
             foreach (string firstExperimentId in idsList.Keys)
             {
@@ -140,7 +138,7 @@ public class KSPScienceMonitor : MonoBehaviour
                 bool available = experiment.IsAvailableWhile(experimentSituation, thisBody);
                 if (available)
                 {
-                    string tmpstr = firstExperimentId + "@" + mainbody.name + experimentSituation.ToString();
+                    string tmpstr = firstExperimentId + "@" + mainbody.name + experimentSituation;
                     if (biomeNeeded)
                         tmpstr += biome.Replace(" ", string.Empty);
                     bool found = false;
@@ -162,14 +160,15 @@ public class KSPScienceMonitor : MonoBehaviour
                         //                     GUILayout.Label(foundScienceSubject.scienceCap.ToString(), style);
                         //                     GUILayout.Label(foundScienceSubject.science.ToString(), style);
                         //                     GUILayout.EndHorizontal();
-                        ExperimentsNow.Add(new Experiment(tmpstr, foundScienceSubject.science, foundScienceSubject.scienceCap - foundScienceSubject.science, thisBody.name, firstExperimentId));
+                        ExperimentsNow.Add(new Experiment(tmpstr, foundScienceSubject.science, foundScienceSubject.scienceCap - foundScienceSubject.science, thisBody.name,
+                            firstExperimentId));
                         //tmpstr + " " + foundScienceSubject.scienceCap.ToString() + " " + foundScienceSubject.science.ToString());
                     }
                     else
                     {
                         //                    style.normal.textColor = Color.green;
                         //                    GUILayout.Label(tmpstr, style);
-                        ExperimentsNow.Add(new Experiment(tmpstr, 0, experiment.baseValue * experiment.dataScale, thisBody.name, firstExperimentId));
+                        ExperimentsNow.Add(new Experiment(tmpstr, 0, experiment.baseValue*experiment.dataScale, thisBody.name, firstExperimentId));
 
                         //ExperimentsNow.Add(tmpstr);
                         if (autoDeploy)
@@ -248,7 +247,6 @@ public class KSPScienceMonitor : MonoBehaviour
                         GUILayout.Label(idsList[experimentNow.type].t2.ToString(), style);
                         break;
                 }
-
             }
             GUILayout.EndVertical();
         }
@@ -256,11 +254,16 @@ public class KSPScienceMonitor : MonoBehaviour
 
         GUILayout.EndScrollView();
         //GUILayout.EndHorizontal();
-
-        if (GUI.RepeatButton(new Rect(windowPosition.width - 20, windowPosition.height - 20, 20, 20), ""))
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(20);
+        GUILayout.EndHorizontal();
+        if (GUI.Button(new Rect(windowPosition.width - 20, 0, 20, 20), "X"))
+            drawWindow = false;
+        if (GUI.RepeatButton(new Rect(windowPosition.width - 20, windowPosition.height - 20, 20, 20), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
+
     public static ExperimentSituations ExperimentSituationFromVesselSituation(Vessel.Situations situation, Vessel thisVessel)
     {
         switch (situation)
@@ -281,10 +284,10 @@ public class KSPScienceMonitor : MonoBehaviour
                 if (thisVessel.altitude < thisVessel.mainBody.scienceValues.spaceAltitudeThreshold)
                     return ExperimentSituations.InSpaceLow;
                 return ExperimentSituations.InSpaceHigh;
-
         }
         return ExperimentSituations.SrfSplashed;
     }
+
     public void OnDestroy()
     {
         print("Destroy Science Monitor");

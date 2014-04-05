@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 using Toolbar;
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
-class KSPScienceButton : MonoBehaviour
+public class KSPScienceButton : MonoBehaviour
 {
     private IButton toolbarKSPScienceButton;
 
@@ -17,13 +13,18 @@ class KSPScienceButton : MonoBehaviour
         toolbarKSPScienceButton.ToolTip = "ScienceLibrary";
         toolbarKSPScienceButton.Visible = true;
         toolbarKSPScienceButton.OnClick += button1_OnClick;
-        KSPScienceLibrary.toolbarButton = toolbarKSPScienceButton;
+        KSPScienceLibrary.toolbarButton = (KSPScienceButton) toolbarKSPScienceButton;
         toolbarKSPScienceButton.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER, GameScenes.FLIGHT);
     }
 
-    void button1_OnClick(ClickEvent e)
+    private void button1_OnClick(ClickEvent e)
     {
         KSPScienceLibrary.drawWindow = !KSPScienceLibrary.drawWindow;
+    }
+
+    public void UpdateIcon(bool drawWindow)
+    {
+        toolbarKSPScienceButton.TexturePath = drawWindow ? "ScienceLibrary/img2l" : "ScienceLibrary/img1l";
     }
 
     internal void OnDestroy()
