@@ -10,8 +10,6 @@ public class KSPScienceMonitor : MonoBehaviour
     private static GUIStyle windowStyle;
 
     public static bool drawWindow = false;
-    private bool resizingWindow;
-    private Vector2 scrollVector2;
 
     // List of science on this ship
     private readonly List<String> OnShip = new List<string>();
@@ -33,8 +31,10 @@ public class KSPScienceMonitor : MonoBehaviour
     // Optimizations
     private float lateUpdateTimer;
     private int lateUpdateTimerCounter;
-    
-    
+
+    private bool resizingWindow;
+    private Vector2 scrollVector2;
+
     public void Awake()
     {
         RenderingManager.AddToPostDrawQueue(0, OnDraw);
@@ -184,10 +184,11 @@ public class KSPScienceMonitor : MonoBehaviour
                         ExperimentsNow.Add(new Experiment(experimentFullName, foundScienceSubject.science, foundScienceSubject.scienceCap - foundScienceSubject.science,
                             thisBody.name,
                             firstExperimentId, onship));
-                    } else
+                    }
+                    else
                     {
                         double datavalue = Experiment.ScienceDataValue(thisBody, experimentSituation);
-                        ExperimentsNow.Add(new Experiment(experimentFullName, 0, Math.Round(experiment.baseValue*experiment.dataScale*datavalue, 2), thisBody.name,
+                        ExperimentsNow.Add(new Experiment(experimentFullName, 0, Math.Round(experiment.baseValue * experiment.dataScale * datavalue, 2), thisBody.name,
                             firstExperimentId, onship));
 
 
