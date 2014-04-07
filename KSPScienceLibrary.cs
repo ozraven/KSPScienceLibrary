@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Toolbar;
 using UnityEngine;
 
 
-[KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
+
+[KSPAddon(KSPAddon.Startup.EveryScene, false)]
 public class KSPScienceLibrary : MonoBehaviour
 {
     public static KSPScienceButton toolbarButton;
@@ -151,6 +150,8 @@ public class KSPScienceLibrary : MonoBehaviour
             {
                 GUILayout.EndHorizontal();
             }
+
+
             pressedCounter++;
         }
         GUILayout.EndScrollView();
@@ -167,8 +168,7 @@ public class KSPScienceLibrary : MonoBehaviour
             {
                 selectedExperiments2.Sort(SortByNameD);
                 lastsorted = 5;
-            }
-            else
+            } else
             {
                 selectedExperiments2.Sort(SortByName);
                 lastsorted = 1;
@@ -180,8 +180,7 @@ public class KSPScienceLibrary : MonoBehaviour
             {
                 selectedExperiments2.Sort(SortByEarnedD);
                 lastsorted = 6;
-            }
-            else
+            } else
             {
                 selectedExperiments2.Sort(SortByEarned);
                 lastsorted = 2;
@@ -193,8 +192,7 @@ public class KSPScienceLibrary : MonoBehaviour
             {
                 selectedExperiments2.Sort(SortByRemainD);
                 lastsorted = 7;
-            }
-            else
+            } else
             {
                 selectedExperiments2.Sort(SortByRemain);
                 lastsorted = 3;
@@ -206,8 +204,7 @@ public class KSPScienceLibrary : MonoBehaviour
             {
                 selectedExperiments2.Sort(SortByTypeD);
                 lastsorted = 8;
-            }
-            else
+            } else
             {
                 selectedExperiments2.Sort(SortByType);
                 lastsorted = 4;
@@ -261,6 +258,8 @@ public class KSPScienceLibrary : MonoBehaviour
                 GUILayout.Label(experiment.fullName);
         }
         GUILayout.EndVertical();
+        GUILayout.Space(20);
+
         GUILayout.EndHorizontal();
         GUILayout.EndScrollView();
         GUILayout.Space(20);
@@ -268,6 +267,7 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.Space(20);
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
+
 
         if (GUI.Button(new Rect(windowPosition.width - 20, 0, 20, 20), "X"))
             drawWindow = false;
@@ -287,7 +287,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
         foreach (string id in exIds)
         {
-            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof(ExperimentSituations)))
+            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
             {
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
@@ -308,8 +308,7 @@ public class KSPScienceLibrary : MonoBehaviour
                             }
                             if (body.BiomeMap.Attributes.Length == 0)
                                 newExperiments.Add(id + "@" + body.name + experimentSituation);
-                        }
-                        else
+                        } else
                         {
                             newExperiments.Add(id + "@" + body.name + experimentSituation);
                         }
@@ -322,7 +321,7 @@ public class KSPScienceLibrary : MonoBehaviour
         foreach (ScienceSubject scienceSubject in subjectslist)
         {
             newExperiments.Remove(scienceSubject.id);
-            string title = scienceSubject.title;
+            string title = scienceSubject.id;
             double earned = Math.Round(scienceSubject.science, 2);
             double remain = Math.Round(scienceSubject.scienceCap - earned, 2);
             string body = FindExperimentBody(scienceSubject.id.Substring(scienceSubject.id.IndexOf("@") + 1));
@@ -338,7 +337,10 @@ public class KSPScienceLibrary : MonoBehaviour
             string body = FindExperimentBody(experimentSecondText);
             ExperimentSituations situation = FindExperimentSituation(experimentSecondText);
             ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(experimentFirstText);
-            var ex = new Experiment(newExperiment, 0, experiment.scienceCap, body, experimentFirstText);
+            CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => celestialBody.name == body);
+
+            double datavalue = Experiment.ScienceDataValue(thisBody, situation);
+            var ex = new Experiment(newExperiment, 0, Math.Round(experiment.scienceCap*datavalue, 2), body, experimentFirstText);
             dataOutputList.Add(ex);
         }
         dataOutputList.Sort(SortByName);
@@ -454,7 +456,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public static ExperimentSituations FindExperimentSituation(string experimentSecondText)
     {
-        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof(ExperimentSituations)))
+        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
             if (experimentSecondText.Contains(experimentSituation.ToString()))
                 return experimentSituation;
         throw new Exception("Error in FindExperimentSituation: Can't find situation in '" + experimentSecondText + "'");

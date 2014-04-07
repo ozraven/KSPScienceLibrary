@@ -10,17 +10,31 @@ public class KSPScienceMonitor : MonoBehaviour
     private static GUIStyle windowStyle;
 
     public static bool drawWindow = false;
-    private readonly List<String> OnShip = new List<string>();
-    private List<Experiment> ExperimentsNow = new List<Experiment>();
-    //
-    private bool autoPauseOnNew;
-    private Dictionary<string, Tupel<int, int>> idsList = new Dictionary<string, Tupel<int, int>>();
-    //
-    private float lateUpdateTimer;
-    private List<ModuleScienceExperiment> modules = new List<ModuleScienceExperiment>();
     private bool resizingWindow;
     private Vector2 scrollVector2;
 
+    // List of science on this ship
+    private readonly List<String> OnShip = new List<string>();
+
+    // List of possible science at this moment and it is the list to draw on window
+    private List<Experiment> ExperimentsNow = new List<Experiment>();
+
+    // whether it shound pause game at new science
+    private bool autoPauseOnNew;
+
+    // firstScienceID -> (count deployed , count undeployed)
+    private Dictionary<string, Tupel<int, int>> idsList = new Dictionary<string, Tupel<int, int>>();
+
+    // "last" to compare with "now". For optimizations
+    private string lastBiome;
+    private ExperimentSituations lastExperimentSituation;
+    private CelestialBody lastMainBody;
+
+    // Optimizations
+    private float lateUpdateTimer;
+    private int lateUpdateTimerCounter;
+    
+    
     public void Awake()
     {
         RenderingManager.AddToPostDrawQueue(0, OnDraw);
@@ -42,50 +56,35 @@ public class KSPScienceMonitor : MonoBehaviour
             windowPosition.width = Input.mousePosition.x - windowPosition.x + 10;
             windowPosition.height = (Screen.height - Input.mousePosition.y) - windowPosition.y + 10;
         }
-    }
 
-    private void OnDraw()
-    {
-        if (toolbarButton != null)
-            toolbarButton.UpdateIcon(drawWindow);
-        if (drawWindow)
-            windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
-    }
-
-    private void OnWindow(int windowID)
-    {
-        //         GUILayout.BeginHorizontal();
-        //         GUILayout.Label("ABC-");
-        //         GUILayout.Label("123");
-        //         GUILayout.EndHorizontal();
-
-        GUILayout.BeginHorizontal();
-        autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
-        GUILayout.EndHorizontal();
-
-        //         GUILayout.BeginHorizontal();
-        //         drawWindow = GUILayout.Toggle(drawWindow, "Window State: " + drawWindow);
-        //         GUILayout.EndHorizontal();
-        Vessel.Situations situation = FlightGlobals.ActiveVessel.situation;
-        //         GUILayout.Label(situation.ToString());
-        //         Vessel.State state = FlightGlobals.ActiveVessel.state;
-        //         GUILayout.Label(state.ToString());
-        ExperimentSituations experimentSituation = ExperimentSituationFromVesselSituation(situation, FlightGlobals.ActiveVessel);
-        //GUILayout.Label(experimentSituation.ToString());
-        //         FlightCtrlState ctrlState = FlightGlobals.ActiveVessel.ctrlState;
-        //         GUILayout.Label(ctrlState.ToString());
-        CelestialBody mainbody = FlightGlobals.ActiveVessel.mainBody;
-        //GUILayout.Label(mainbody.name);
-        scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
-        //GUILayout.BeginHorizontal();
-
-
-        if (lateUpdateTimer < Time.time)
+        // using "while" for possibility to "break". So we dont have to use GOTO
+        while (drawWindow && (lateUpdateTimer < Time.time || lateUpdateTimerCounter > 3))
         {
+            lateUpdateTimer = Time.time + 1;
+
+            Vessel.Situations situation = FlightGlobals.ActiveVessel.situation;
+            ExperimentSituations experimentSituation = Experiment.ExperimentSituationFromVesselSituation(situation, FlightGlobals.ActiveVessel);
+            CelestialBody mainbody = FlightGlobals.ActiveVessel.mainBody;
+            string biome = "";
+            if (FlightGlobals.ActiveVessel.landedAt != string.Empty)
+                biome += FlightGlobals.ActiveVessel.landedAt;
+            else
+                biome +=
+                    ScienceUtil.GetExperimentBiome(FlightGlobals.ActiveVessel.mainBody, FlightGlobals.ActiveVessel.latitude, FlightGlobals.ActiveVessel.longitude);
+
+            if (mainbody == lastMainBody && biome == lastBiome && lastExperimentSituation == experimentSituation && lateUpdateTimerCounter <= 3)
+            {
+                lateUpdateTimer = 0;
+                lateUpdateTimerCounter++;
+                break;
+            }
+            lateUpdateTimerCounter = 0;
+            lastBiome = biome;
+            lastMainBody = mainbody;
+            lastExperimentSituation = experimentSituation;
+
             idsList = new Dictionary<string, Tupel<int, int>>();
             OnShip.Clear();
-            //modules = new List<ModuleScienceExperiment>();
-            lateUpdateTimer = Time.time + 1;
 
             //Search for all Science Experiment Modules on vessel
             foreach (ModuleScienceExperiment moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
@@ -148,14 +147,6 @@ public class KSPScienceMonitor : MonoBehaviour
             ExperimentsNow = new List<Experiment>();
 
 
-            string biome = "";
-            if (FlightGlobals.ActiveVessel.landedAt != string.Empty)
-                biome += FlightGlobals.ActiveVessel.landedAt;
-            else
-                biome +=
-                    FlightGlobals.ActiveVessel.mainBody.BiomeMap.GetAtt(FlightGlobals.ActiveVessel.latitude*Math.PI/180d,
-                        FlightGlobals.ActiveVessel.longitude*Math.PI/180d).name;
-
             //Get allready done experiments from space center
             List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
 
@@ -195,7 +186,9 @@ public class KSPScienceMonitor : MonoBehaviour
                             firstExperimentId, onship));
                     } else
                     {
-                        ExperimentsNow.Add(new Experiment(experimentFullName, 0, experiment.baseValue*experiment.dataScale, thisBody.name, firstExperimentId, onship));
+                        double datavalue = Experiment.ScienceDataValue(thisBody, experimentSituation);
+                        ExperimentsNow.Add(new Experiment(experimentFullName, 0, Math.Round(experiment.baseValue*experiment.dataScale*datavalue, 2), thisBody.name,
+                            firstExperimentId, onship));
 
 
                         if (autoPauseOnNew && !onship)
@@ -207,7 +200,26 @@ public class KSPScienceMonitor : MonoBehaviour
                     }
                 }
             }
+
+            break;
         }
+    }
+
+    private void OnDraw()
+    {
+        if (toolbarButton != null)
+            toolbarButton.UpdateIcon(drawWindow);
+        if (drawWindow)
+            windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
+    }
+
+    private void OnWindow(int windowID)
+    {
+        GUILayout.BeginHorizontal();
+        autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
+        GUILayout.EndHorizontal();
+        scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
+
 
         GUILayout.BeginHorizontal();
         for (int i = 0; i < 6; i++)
@@ -279,30 +291,6 @@ public class KSPScienceMonitor : MonoBehaviour
         if (GUI.RepeatButton(new Rect(windowPosition.width - 20, windowPosition.height - 20, 20, 20), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
-    }
-
-    public static ExperimentSituations ExperimentSituationFromVesselSituation(Vessel.Situations situation, Vessel thisVessel)
-    {
-        switch (situation)
-        {
-            case Vessel.Situations.SPLASHED:
-                return ExperimentSituations.SrfSplashed;
-            case Vessel.Situations.LANDED:
-            case Vessel.Situations.PRELAUNCH:
-                return ExperimentSituations.SrfLanded;
-            case Vessel.Situations.FLYING:
-                if (thisVessel.altitude < thisVessel.mainBody.scienceValues.flyingAltitudeThreshold)
-                    return ExperimentSituations.FlyingLow;
-                return ExperimentSituations.FlyingHigh;
-            case Vessel.Situations.SUB_ORBITAL:
-            case Vessel.Situations.ORBITING:
-            case Vessel.Situations.ESCAPING:
-            case Vessel.Situations.DOCKED:
-                if (thisVessel.altitude < thisVessel.mainBody.scienceValues.spaceAltitudeThreshold)
-                    return ExperimentSituations.InSpaceLow;
-                return ExperimentSituations.InSpaceHigh;
-        }
-        return ExperimentSituations.SrfSplashed;
     }
 
     public void OnDestroy()
