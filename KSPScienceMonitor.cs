@@ -139,6 +139,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     unfocusedRange *= unfocusedRange;
                     if (destination3.sqrMagnitude < unfocusedRange)
                     {
+                        string uid = asteroid.part.uid.ToString();
                         if (!idsList.ContainsKey("asteroidSample"))
                             idsList.Add("asteroidSample", new Tupel<int, int>(0, 0));
                     }
@@ -173,10 +174,17 @@ public class KSPScienceMonitor : MonoBehaviour
                             foundScienceSubject = scienceSubject;
                             break;
                         }
-                    var style = new GUIStyle();
+                    //var style = new GUIStyle();
 
 
-                    bool onship = OnShip.Contains(experimentFullName);
+                    //bool onship = OnShip.Contains(experimentFullName);
+                    bool onship = OnShip.Exists(delegate(string s)
+                    {
+                        bool x = s.Contains(experimentFullName);
+                        if (x && s.Length > experimentFullName.Length)
+                            experimentFullName = s;
+                        return x;
+                    });
 
 
                     if (foundAtSpaceCenter)
