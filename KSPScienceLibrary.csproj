@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experiment.cs" />
+    <Compile Include="ExperimentView.cs" />
     <Compile Include="KSPScienceButton.cs" />
     <Compile Include="KSPScienceLibrary.cs" />
     <Compile Include="KSPScienceMonitor.cs" />

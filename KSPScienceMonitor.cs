@@ -12,16 +12,16 @@ public class KSPScienceMonitor : MonoBehaviour
     public static bool drawWindow = false;
 
     // List of science on this ship
-    private readonly List<String> OnShip = new List<string>();
+    //private readonly List<ExperimentView> OnShip = new List<ExperimentView>();
+    //List of science to show on window
+    private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
     // List of possible science at this moment and it is the list to draw on window
-    private List<Experiment> ExperimentsNow = new List<Experiment>();
+    //private List<Experiment> ExperimentsNow = new List<Experiment>();
 
-    // whether it shound pause game at new science
+    // whether it should pause game at new science
     private bool autoPauseOnNew;
 
-    // firstScienceID -> (count deployed , count undeployed)
-    private Dictionary<string, Tupel<int, int>> idsList = new Dictionary<string, Tupel<int, int>>();
 
     // "last" to compare with "now". For optimizations
     private string lastBiome;
@@ -62,15 +62,13 @@ public class KSPScienceMonitor : MonoBehaviour
         {
             lateUpdateTimer = Time.time + 1;
 
-            Vessel.Situations situation = FlightGlobals.ActiveVessel.situation;
-            ExperimentSituations experimentSituation = Experiment.ExperimentSituationFromVesselSituation(situation, FlightGlobals.ActiveVessel);
+            ExperimentSituations experimentSituation = ScienceUtil.GetExperimentSituation(FlightGlobals.ActiveVessel);
             CelestialBody mainbody = FlightGlobals.ActiveVessel.mainBody;
-            string biome = "";
+            string biome;
             if (FlightGlobals.ActiveVessel.landedAt != string.Empty)
-                biome += FlightGlobals.ActiveVessel.landedAt;
+                biome = FlightGlobals.ActiveVessel.landedAt;
             else
-                biome +=
-                    ScienceUtil.GetExperimentBiome(FlightGlobals.ActiveVessel.mainBody, FlightGlobals.ActiveVessel.latitude, FlightGlobals.ActiveVessel.longitude);
+                biome = ScienceUtil.GetExperimentBiome(FlightGlobals.ActiveVessel.mainBody, FlightGlobals.ActiveVessel.latitude, FlightGlobals.ActiveVessel.longitude);
 
             if (mainbody == lastMainBody && biome == lastBiome && lastExperimentSituation == experimentSituation && lateUpdateTimerCounter <= 3)
             {
@@ -83,52 +81,54 @@ public class KSPScienceMonitor : MonoBehaviour
             lastMainBody = mainbody;
             lastExperimentSituation = experimentSituation;
 
-            idsList = new Dictionary<string, Tupel<int, int>>();
-            OnShip.Clear();
+            Output.Clear();
+            //OnShip.Clear();
+
+
+            //List<ScienceExperiment> PossibleExperiments = new List<ScienceExperiment>();
 
             //Search for all Science Experiment Modules on vessel
             foreach (ModuleScienceExperiment moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
             {
-                if (!idsList.ContainsKey(moduleScienceExperiment.experimentID))
-                    idsList.Add(moduleScienceExperiment.experimentID,
-                        new Tupel<int, int>(moduleScienceExperiment.Deployed ? 1 : 0, moduleScienceExperiment.Deployed ? 0 : 1));
-                else
-                    idsList[moduleScienceExperiment.experimentID] =
-                        new Tupel<int, int>(
-                            moduleScienceExperiment.Deployed ? idsList[moduleScienceExperiment.experimentID].t1 + 1 : idsList[moduleScienceExperiment.experimentID].t1 + 0,
-                            moduleScienceExperiment.Deployed ? idsList[moduleScienceExperiment.experimentID].t2 + 0 : idsList[moduleScienceExperiment.experimentID].t2 + 1);
-                //modules.Add(moduleScienceExperiment);
-
-                //Write all found deployed experiments into OnShip list
-                if (moduleScienceExperiment.Deployed)
+                string firstExperimentId = moduleScienceExperiment.experimentID;
+                ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                if (available)
                 {
-                    foreach (ScienceData scienceData in moduleScienceExperiment.GetData())
+                    if (moduleScienceExperiment.Deployed)
                     {
-                        if (!OnShip.Contains(scienceData.subjectID))
+                        foreach (ScienceData scienceData in moduleScienceExperiment.GetData())
                         {
-                            OnShip.Add(scienceData.subjectID);
+                            var experimentView = new ExperimentView(scienceData);
+                            if (!Output.Contains(experimentView))
+                                Output.Add(experimentView);
                         }
                     }
-                }
-            }
-
-            //Search for all Science Containers on vessel and write all found experiments into OnShip list
-            foreach (ModuleScienceContainer moduleScienceContainer in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>())
-            {
-                foreach (ScienceData scienceData in moduleScienceContainer.GetData())
-                {
-                    if (!OnShip.Contains(scienceData.subjectID))
                     {
-                        OnShip.Add(scienceData.subjectID);
+                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
+                            scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        var experimentView = new ExperimentView(scienceSubject);
+                        if (!Output.Contains(experimentView))
+                            Output.Add(experimentView);
                     }
                 }
             }
-
 
             if (FlightGlobals.ActiveVessel.GetCrewCount() > 0)
             {
-                if (!idsList.ContainsKey("evaReport"))
-                    idsList.Add("evaReport", new Tupel<int, int>(0, 0));
+                {
+                    string firstExperimentId = "evaReport";
+                    ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                    bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                    if (available)
+                    {
+                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
+                            scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        var experimentView = new ExperimentView(scienceSubject);
+                        if (!Output.Contains(experimentView))
+                            Output.Add(experimentView);
+                    }
+                }
 
 
                 ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
@@ -139,76 +139,42 @@ public class KSPScienceMonitor : MonoBehaviour
                     unfocusedRange *= unfocusedRange;
                     if (destination3.sqrMagnitude < unfocusedRange)
                     {
-                        string uid = asteroid.part.uid.ToString();
-                        if (!idsList.ContainsKey("asteroidSample"))
-                            idsList.Add("asteroidSample", new Tupel<int, int>(0, 0));
+                        string firstExperimentId = "asteroidSample";
+                        ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                        bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                        if (available)
+                        {
+                            string asteroidname = asteroid.part.partInfo.name + asteroid.part.flightID;
+                            ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody,
+                                scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                            var experimentView = new ExperimentView(scienceSubject);
+                            if (!Output.Contains(experimentView))
+                                Output.Add(experimentView);
+                        }
                     }
                 }
             }
-            ExperimentsNow = new List<Experiment>();
-
-
-            //Get allready done experiments from space center
-            List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
-
-            //Get Possible firstIDs from Vessel
-            foreach (string firstExperimentId in idsList.Keys)
+            //Search for all Science Containers on vessel and write all found experiments into OnShip list
+            foreach (ModuleScienceContainer moduleScienceContainer in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>())
             {
-                CelestialBody thisBody = FlightGlobals.ActiveVessel.mainBody;
-                ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
-                bool biomeNeeded = experiment.BiomeIsRelevantWhile(experimentSituation);
-                bool available = experiment.IsAvailableWhile(experimentSituation, thisBody);
-                if (available)
+                foreach (ScienceData scienceData in moduleScienceContainer.GetData())
                 {
-                    string experimentFullName = firstExperimentId + "@" + mainbody.name + experimentSituation;
-                    if (biomeNeeded)
-                        experimentFullName += biome.Replace(" ", string.Empty);
-                    bool foundAtSpaceCenter = false;
-                    ScienceSubject foundScienceSubject = null;
-
-                    //Test if this experiment allready made, then set foundAtSpaceCenter=true
-                    foreach (ScienceSubject scienceSubject in subjectslist)
-                        if (scienceSubject.id == experimentFullName)
-                        {
-                            foundAtSpaceCenter = true;
-                            foundScienceSubject = scienceSubject;
-                            break;
-                        }
-                    //var style = new GUIStyle();
-
-
-                    //bool onship = OnShip.Contains(experimentFullName);
-                    bool onship = OnShip.Exists(delegate(string s)
+                    var experimentView = new ExperimentView(scienceData);
+                    //if (!Output.Contains(experimentView))
                     {
-                        bool x = s.Contains(experimentFullName);
-                        if (x && s.Length > experimentFullName.Length)
-                            experimentFullName = s;
-                        return x;
-                    });
-
-
-                    if (foundAtSpaceCenter)
-                    {
-                        ExperimentsNow.Add(new Experiment(experimentFullName, foundScienceSubject.science, foundScienceSubject.scienceCap - foundScienceSubject.science,
-                            thisBody.name,
-                            firstExperimentId, onship));
-                    }
-                    else
-                    {
-                        double datavalue = Experiment.ScienceDataValue(thisBody, experimentSituation);
-                        ExperimentsNow.Add(new Experiment(experimentFullName, 0, Math.Round(experiment.baseValue * experiment.dataScale * datavalue, 2), thisBody.name,
-                            firstExperimentId, onship));
-
-
-                        if (autoPauseOnNew && !onship)
-                        {
-                            //activate pause
-                            TimeWarp.SetRate(0, true);
-                            FlightDriver.SetPause(true);
-                        }
+                        Output.Add(experimentView);
                     }
                 }
             }
+
+
+            //             if (autoPauseOnNew && !onship)
+            //             {
+            //                 //activate pause
+            //                 TimeWarp.SetRate(0, true);
+            //                 FlightDriver.SetPause(true);
+            //             }
+
 
             break;
         }
@@ -246,7 +212,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     GUILayout.Label("OnShip");
                     break;
                 case 3:
-                    GUILayout.Label("Remaining");
+                    GUILayout.Label("Max");
                     break;
                 case 4:
                     GUILayout.Label("Depl");
@@ -255,34 +221,34 @@ public class KSPScienceMonitor : MonoBehaviour
                     GUILayout.Label("Unde");
                     break;
             }
-            foreach (Experiment experimentNow in ExperimentsNow)
+            foreach (ExperimentView experimentNow in Output)
             {
                 var style = new GUIStyle();
-                if (experimentNow.earned > 0)
+                if (experimentNow.EarnedScience > 0)
                     style.normal.textColor = Color.red;
-                else if (experimentNow.onShip)
+                else if (experimentNow.OnShip)
                     style.normal.textColor = Color.yellow;
                 else
                     style.normal.textColor = Color.green;
                 switch (i)
                 {
                     case 0:
-                        GUILayout.Label(experimentNow.fullName, style);
+                        GUILayout.Label(experimentNow.FullExperimentId, style);
                         break;
                     case 1:
-                        GUILayout.Label(Math.Round(experimentNow.earned, 2).ToString(), style);
+                        GUILayout.Label(Math.Round(experimentNow.EarnedScience, 2).ToString(), style);
                         break;
                     case 2:
-                        GUILayout.Label(experimentNow.onShip ? "\u221a" : " ", style);
+                        GUILayout.Label(experimentNow.OnShip ? "\u221a" : " ", style);
                         break;
                     case 3:
-                        GUILayout.Label(Math.Round(experimentNow.remain, 2).ToString(), style);
+                        GUILayout.Label(Math.Round(experimentNow.FullScience, 2).ToString(), style);
                         break;
                     case 4:
-                        GUILayout.Label(idsList[experimentNow.FirstIdType].t1.ToString(), style);
+                        GUILayout.Label("-", style);
                         break;
                     case 5:
-                        GUILayout.Label(idsList[experimentNow.FirstIdType].t2.ToString(), style);
+                        GUILayout.Label("-", style);
                         break;
                 }
             }

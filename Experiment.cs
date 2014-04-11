@@ -26,30 +26,6 @@ public struct Experiment
         return fullName + " " + "-" + " " + "-";
     }
 
-    public static ExperimentSituations ExperimentSituationFromVesselSituation(Vessel.Situations situation, Vessel thisVessel)
-    {
-        switch (situation)
-        {
-            case Vessel.Situations.SPLASHED:
-                return ExperimentSituations.SrfSplashed;
-            case Vessel.Situations.LANDED:
-            case Vessel.Situations.PRELAUNCH:
-                return ExperimentSituations.SrfLanded;
-            case Vessel.Situations.FLYING:
-                if (thisVessel.altitude < thisVessel.mainBody.scienceValues.flyingAltitudeThreshold)
-                    return ExperimentSituations.FlyingLow;
-                return ExperimentSituations.FlyingHigh;
-            case Vessel.Situations.SUB_ORBITAL:
-            case Vessel.Situations.ORBITING:
-            case Vessel.Situations.ESCAPING:
-            case Vessel.Situations.DOCKED:
-                if (thisVessel.altitude < thisVessel.mainBody.scienceValues.spaceAltitudeThreshold)
-                    return ExperimentSituations.InSpaceLow;
-                return ExperimentSituations.InSpaceHigh;
-        }
-        return ExperimentSituations.SrfSplashed;
-    }
-
     public static double ScienceDataValue(CelestialBody body, ExperimentSituations situation)
     {
         switch (situation)
