@@ -168,14 +168,6 @@ public class KSPScienceMonitor : MonoBehaviour
             }
 
 
-            //             if (autoPauseOnNew && !onship)
-            //             {
-            //                 //activate pause
-            //                 TimeWarp.SetRate(0, true);
-            //                 FlightDriver.SetPause(true);
-            //             }
-
-
             break;
         }
     }
@@ -197,7 +189,7 @@ public class KSPScienceMonitor : MonoBehaviour
 
 
         GUILayout.BeginHorizontal();
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 4; i++)
         {
             GUILayout.BeginVertical();
             switch (i)
@@ -214,12 +206,12 @@ public class KSPScienceMonitor : MonoBehaviour
                 case 3:
                     GUILayout.Label("Max");
                     break;
-                case 4:
-                    GUILayout.Label("Depl");
-                    break;
-                case 5:
-                    GUILayout.Label("Unde");
-                    break;
+                //                 case 4:
+                //                     GUILayout.Label("Depl");
+                //                     break;
+                //                 case 5:
+                //                     GUILayout.Label("Unde");
+                //                     break;
             }
             foreach (ExperimentView experimentNow in Output)
             {
@@ -244,12 +236,18 @@ public class KSPScienceMonitor : MonoBehaviour
                     case 3:
                         GUILayout.Label(Math.Round(experimentNow.FullScience, 2).ToString(), style);
                         break;
-                    case 4:
-                        GUILayout.Label("-", style);
-                        break;
-                    case 5:
-                        GUILayout.Label("-", style);
-                        break;
+                    //                     case 4:
+                    //                         GUILayout.Label("-", style);
+                    //                         break;
+                    //                     case 5:
+                    //                         GUILayout.Label("-", style);
+                    //                         break;
+                }
+                if (autoPauseOnNew && style.normal.textColor == Color.green)
+                {
+                    //activate pause
+                    TimeWarp.SetRate(0, true);
+                    FlightDriver.SetPause(true);
                 }
             }
             GUILayout.EndVertical();
