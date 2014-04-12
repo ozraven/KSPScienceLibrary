@@ -12,12 +12,11 @@ public class KSPScienceMonitor : MonoBehaviour
     public static bool drawWindow = false;
 
     // List of science on this ship
-    //private readonly List<ExperimentView> OnShip = new List<ExperimentView>();
+    private readonly List<ExperimentView> OnShip = new List<ExperimentView>();
     //List of science to show on window
     private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
-    // List of possible science at this moment and it is the list to draw on window
-    //private List<Experiment> ExperimentsNow = new List<Experiment>();
+
 
     // whether it should pause game at new science
     private bool autoPauseOnNew;
@@ -82,7 +81,7 @@ public class KSPScienceMonitor : MonoBehaviour
             lastExperimentSituation = experimentSituation;
 
             Output.Clear();
-            //OnShip.Clear();
+            OnShip.Clear();
 
 
             //List<ScienceExperiment> PossibleExperiments = new List<ScienceExperiment>();
@@ -102,6 +101,7 @@ public class KSPScienceMonitor : MonoBehaviour
                             var experimentView = new ExperimentView(scienceData);
                             if (!Output.Contains(experimentView))
                                 Output.Add(experimentView);
+                            OnShip.Add(experimentView);
                         }
                     }
                     {
@@ -161,16 +161,16 @@ public class KSPScienceMonitor : MonoBehaviour
                 {
                     var experimentView = new ExperimentView(scienceData);
                     //if (!Output.Contains(experimentView))
-                    {
-                        Output.Add(experimentView);
-                    }
+                    Output.Add(experimentView);
+                    OnShip.Add(experimentView);
                 }
             }
 
-
+            Output.Sort();
             break;
         }
     }
+
 
     private void OnDraw()
     {
@@ -189,7 +189,7 @@ public class KSPScienceMonitor : MonoBehaviour
 
 
         GUILayout.BeginHorizontal();
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 5; i++)
         {
             GUILayout.BeginVertical();
             switch (i)
@@ -201,10 +201,13 @@ public class KSPScienceMonitor : MonoBehaviour
                     GUILayout.Label("Earned");
                     break;
                 case 2:
-                    GUILayout.Label("OnShip");
+                    GUILayout.Label("Max");
                     break;
                 case 3:
-                    GUILayout.Label("Max");
+                    GUILayout.Label("Remains");
+                    break;
+                case 4:
+                    GUILayout.Label("OnShip");
                     break;
                 //                 case 4:
                 //                     GUILayout.Label("Depl");
@@ -221,7 +224,11 @@ public class KSPScienceMonitor : MonoBehaviour
                 else if (experimentNow.OnShip)
                     style.normal.textColor = Color.yellow;
                 else
+                {
                     style.normal.textColor = Color.green;
+                    if (OnShip.Exists(view => view.FullExperimentId == experimentNow.FullExperimentId))
+                        continue;
+                }
                 switch (i)
                 {
                     case 0:
@@ -231,10 +238,13 @@ public class KSPScienceMonitor : MonoBehaviour
                         GUILayout.Label(Math.Round(experimentNow.EarnedScience, 2).ToString(), style);
                         break;
                     case 2:
-                        GUILayout.Label(experimentNow.OnShip ? "\u221a" : " ", style);
+                        GUILayout.Label(Math.Round(experimentNow.FullScience, 2).ToString(), style);
                         break;
                     case 3:
-                        GUILayout.Label(Math.Round(experimentNow.FullScience, 2).ToString(), style);
+                        GUILayout.Label(Math.Round(experimentNow.FullScience - experimentNow.EarnedScience, 2).ToString(), style);
+                        break;
+                    case 4:
+                        GUILayout.Label(experimentNow.OnShip ? "\u221a" : " ", style);
                         break;
                     //                     case 4:
                     //                         GUILayout.Label("-", style);

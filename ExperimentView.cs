@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using UnityEngine;
 
-internal class ExperimentView : IEquatable<ExperimentView>
+internal class ExperimentView : IEquatable<ExperimentView>, IComparable<ExperimentView>
 {
     private readonly float _earnedScience;
     private readonly string _fullExperimentId;
@@ -55,7 +58,36 @@ internal class ExperimentView : IEquatable<ExperimentView>
     public bool Equals(ExperimentView other)
     {
         if (other == null) return false;
-        if (_onShip || other._onShip) return false;
-        return other._fullExperimentId == _fullExperimentId && other._onShip == _onShip;
+        if (_onShip != other._onShip) return false;
+        if (other._fullExperimentId == _fullExperimentId)
+        {
+            if (!_onShip == !other._onShip)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    public int CompareTo(ExperimentView other)
+    {
+        MonoBehaviour.print("CompareTo");
+        string[] splitx = this._fullExperimentId.Split('@');
+        string[] splity = other._fullExperimentId.Split('@');
+
+        if (splitx[0] == splity[0])
+        {
+            if (this._onShip && !other._onShip)
+                return 1;
+            if (other._onShip && !this._onShip)
+                return -1;
+            return 0;
+        }
+        else
+        {
+            return splitx[0].CompareTo(splity[0]);
+        }
     }
 }
