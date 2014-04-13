@@ -56,7 +56,6 @@
     <Compile Include="KSPScienceMonitorButton.cs" />
     <Compile Include="LibraryUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tupel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="img1l.tga">
