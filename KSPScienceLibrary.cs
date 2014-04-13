@@ -217,7 +217,7 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.Space(20);
         GUILayout.BeginVertical();
         GUILayout.Label("TYPE");
-        var style = new GUIStyle();
+        GUIStyle style = new GUIStyle();
         style.normal.textColor = Color.red;
         foreach (Experiment experiment in selectedExperiments2)
         {
@@ -282,12 +282,12 @@ public class KSPScienceLibrary : MonoBehaviour
             return;
 
         dataOutputList = new List<Experiment>();
-        var newExperiments = new List<string>();
+        List<string> newExperiments = new List<string>();
         List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
 
         foreach (string id in exIds)
         {
-            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
+            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof(ExperimentSituations)))
             {
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
@@ -323,10 +323,10 @@ public class KSPScienceLibrary : MonoBehaviour
             newExperiments.Remove(scienceSubject.id);
             string title = scienceSubject.id;
             double earned = Math.Round(scienceSubject.science, 2);
-            double remain = Math.Round(scienceSubject.scienceCap - earned, 2);
+            double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 2);
             string body = FindExperimentBody(scienceSubject.id.Substring(scienceSubject.id.IndexOf("@") + 1));
             string type = scienceSubject.id.Substring(0, scienceSubject.id.IndexOf("@"));
-            var experiment = new Experiment(title, earned, remain, body, type);
+            Experiment experiment = new Experiment(title, earned, remain, body, type);
             dataOutputList.Add(experiment);
         }
 
@@ -340,7 +340,7 @@ public class KSPScienceLibrary : MonoBehaviour
             CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => celestialBody.name == body);
 
             double datavalue = Experiment.ScienceDataValue(thisBody, situation);
-            var ex = new Experiment(newExperiment, 0, Math.Round(experiment.scienceCap*datavalue, 2), body, experimentFirstText);
+            Experiment ex = new Experiment(newExperiment, 0, Math.Round(experiment.scienceCap * datavalue, 2), body, experimentFirstText);
             dataOutputList.Add(ex);
         }
         dataOutputList.Sort(SortByName);
@@ -351,7 +351,7 @@ public class KSPScienceLibrary : MonoBehaviour
     {
         if (input == null)
             input = dataOutputList;
-        var selectedExperimentsTemp = new List<Experiment>();
+        List<Experiment> selectedExperimentsTemp = new List<Experiment>();
         foreach (Experiment experiment in input)
         {
             if (experiment.body == body)
@@ -366,7 +366,7 @@ public class KSPScienceLibrary : MonoBehaviour
     {
         if (input == null)
             input = dataOutputList;
-        var selectedExperimentsTemp = new List<Experiment>();
+        List<Experiment> selectedExperimentsTemp = new List<Experiment>();
         foreach (Experiment experiment in input)
         {
             if (experiment.FirstIdType == type)
@@ -379,7 +379,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public List<string> GetAllDiscoveredExperimentTypes()
     {
-        var selectedExperimentTypesTemp = new List<string>();
+        List<string> selectedExperimentTypesTemp = new List<string>();
         foreach (Experiment experiment in dataOutputList)
         {
             if (selectedExperimentTypesTemp.Contains(experiment.FirstIdType))
@@ -456,7 +456,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public static ExperimentSituations FindExperimentSituation(string experimentSecondText)
     {
-        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
+        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof(ExperimentSituations)))
             if (experimentSecondText.Contains(experimentSituation.ToString()))
                 return experimentSituation;
         throw new Exception("Error in FindExperimentSituation: Can't find situation in '" + experimentSecondText + "'");

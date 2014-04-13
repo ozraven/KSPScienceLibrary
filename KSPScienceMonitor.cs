@@ -13,13 +13,13 @@ public class KSPScienceMonitor : MonoBehaviour
 
     // List of science on this ship
     private readonly List<ExperimentView> OnShip = new List<ExperimentView>();
-    //List of science to show on window
+    // List of science to show on window
     private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
 
 
     // whether it should pause game at new science
-    private bool autoPauseOnNew;
+    // private bool autoPauseOnNew;
 
 
     // "last" to compare with "now". For optimizations
@@ -56,7 +56,7 @@ public class KSPScienceMonitor : MonoBehaviour
             windowPosition.height = (Screen.height - Input.mousePosition.y) - windowPosition.y + 10;
         }
 
-        // using "while" for possibility to "break". So we dont have to use GOTO
+        // using "while" for possibility to "break". So we dont have to use GOTO. using timer to skip frames.
         while (drawWindow && (lateUpdateTimer < Time.time || lateUpdateTimerCounter > 3))
         {
             lateUpdateTimer = Time.time + 1;
@@ -86,7 +86,7 @@ public class KSPScienceMonitor : MonoBehaviour
 
             //List<ScienceExperiment> PossibleExperiments = new List<ScienceExperiment>();
 
-            //Search for all Science Experiment Modules on vessel
+            //Search for all Science Experiment Modules on vessel, Check experiment available and add in "Output" and "OnShip"
             foreach (ModuleScienceExperiment moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
             {
                 string firstExperimentId = moduleScienceExperiment.experimentID;
@@ -98,7 +98,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     {
                         foreach (ScienceData scienceData in moduleScienceExperiment.GetData())
                         {
-                            var experimentView = new ExperimentView(scienceData);
+                            ExperimentView experimentView = new ExperimentView(scienceData);
                             if (!Output.Contains(experimentView))
                                 Output.Add(experimentView);
                             OnShip.Add(experimentView);
@@ -107,13 +107,14 @@ public class KSPScienceMonitor : MonoBehaviour
                     {
                         ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
                             scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
-                        var experimentView = new ExperimentView(scienceSubject);
+                        ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
                     }
                 }
             }
 
+            // Check for Kerbals on board. That means we can also use "evaReport", "surfaceSample", "asteroidSample" in EVA.
             if (FlightGlobals.ActiveVessel.GetCrewCount() > 0)
             {
                 {
@@ -124,13 +125,26 @@ public class KSPScienceMonitor : MonoBehaviour
                     {
                         ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
                             scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
-                        var experimentView = new ExperimentView(scienceSubject);
+                        ExperimentView experimentView = new ExperimentView(scienceSubject);
+                        if (!Output.Contains(experimentView))
+                            Output.Add(experimentView);
+                    }
+                }
+                {
+                    string firstExperimentId = "surfaceSample";
+                    ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                    bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                    if (available)
+                    {
+                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
+                            scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
                     }
                 }
 
-
+                // Find asteroid that could be used for science. (I hope it will not be too many asteroids, because of linear complexity of this code)
                 ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
                 foreach (ModuleAsteroid asteroid in asteroids)
                 {
@@ -147,7 +161,7 @@ public class KSPScienceMonitor : MonoBehaviour
                             string asteroidname = asteroid.part.partInfo.name + asteroid.part.flightID;
                             ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody,
                                 scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
-                            var experimentView = new ExperimentView(scienceSubject);
+                            ExperimentView experimentView = new ExperimentView(scienceSubject);
                             if (!Output.Contains(experimentView))
                                 Output.Add(experimentView);
                         }
@@ -159,7 +173,7 @@ public class KSPScienceMonitor : MonoBehaviour
             {
                 foreach (ScienceData scienceData in moduleScienceContainer.GetData())
                 {
-                    var experimentView = new ExperimentView(scienceData);
+                    ExperimentView experimentView = new ExperimentView(scienceData);
                     //if (!Output.Contains(experimentView))
                     Output.Add(experimentView);
                     OnShip.Add(experimentView);
@@ -182,9 +196,9 @@ public class KSPScienceMonitor : MonoBehaviour
 
     private void OnWindow(int windowID)
     {
-        GUILayout.BeginHorizontal();
-        autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
-        GUILayout.EndHorizontal();
+        //         GUILayout.BeginHorizontal();
+        //         autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
+        //         GUILayout.EndHorizontal();
         scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
 
 
@@ -209,56 +223,66 @@ public class KSPScienceMonitor : MonoBehaviour
                 case 4:
                     GUILayout.Label("OnShip");
                     break;
-                //                 case 4:
-                //                     GUILayout.Label("Depl");
-                //                     break;
-                //                 case 5:
-                //                     GUILayout.Label("Unde");
-                //                     break;
             }
-            foreach (ExperimentView experimentNow in Output)
+            foreach (ExperimentView experimentView in Output)
             {
-                var style = new GUIStyle();
-                if (experimentNow.EarnedScience > 0)
-                    style.normal.textColor = Color.red;
-                else if (experimentNow.OnShip)
+                GUIStyle style = new GUIStyle();
+                if (experimentView.OnShip)
                     style.normal.textColor = Color.yellow;
+                else if (experimentView.EarnedScience > 0)
+                    style.normal.textColor = Color.red;
                 else
                 {
                     style.normal.textColor = Color.green;
-                    if (OnShip.Exists(view => view.FullExperimentId == experimentNow.FullExperimentId))
+                    if (OnShip.Exists(view => view.FullExperimentId == experimentView.FullExperimentId))
                         continue;
                 }
                 switch (i)
                 {
                     case 0:
-                        GUILayout.Label(experimentNow.FullExperimentId, style);
+                        GUILayout.Label(experimentView.FullExperimentId, style);
+                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetSubjectByID(experimentView.FullExperimentId);
+                        float ScienceValue = ResearchAndDevelopment.GetScienceValue(30, scienceSubject);
+                        GUILayout.Label(ScienceValue.ToString(), style);
                         break;
                     case 1:
-                        GUILayout.Label(Math.Round(experimentNow.EarnedScience, 2).ToString(), style);
+                        {
+                            string strout = Math.Round(experimentView.EarnedScience, 2).ToString();
+                            if (strout == "0") strout = "-";
+                            GUILayout.Label(strout, style);
+                        }
                         break;
                     case 2:
-                        GUILayout.Label(Math.Round(experimentNow.FullScience, 2).ToString(), style);
+                        {
+                            string strout = Math.Round(experimentView.FullScience, 2).ToString();
+                            if (strout == "0") strout = "-";
+                            GUILayout.Label(strout, style);
+                        }
                         break;
                     case 3:
-                        GUILayout.Label(Math.Round(experimentNow.FullScience - experimentNow.EarnedScience, 2).ToString(), style);
+                        double percent = (experimentView.FullScience - experimentView.EarnedScience) / experimentView.FullScience * 100;
+                        if (percent >= 30)
+                        {
+                            Color b = style.normal.textColor;
+                            style.normal.textColor = Color.green;
+                            GUILayout.Label(Math.Round(percent) + "%", style);
+                            style.normal.textColor = b;
+                        }
+                        else
+                        {
+                            GUILayout.Label(Math.Round(percent) + "%", style);
+                        }
                         break;
                     case 4:
-                        GUILayout.Label(experimentNow.OnShip ? "\u221a" : " ", style);
+                        GUILayout.Label(experimentView.OnShip ? "\u221a" : " ", style);
                         break;
-                    //                     case 4:
-                    //                         GUILayout.Label("-", style);
-                    //                         break;
-                    //                     case 5:
-                    //                         GUILayout.Label("-", style);
-                    //                         break;
                 }
-                if (autoPauseOnNew && style.normal.textColor == Color.green)
-                {
-                    //activate pause
-                    TimeWarp.SetRate(0, true);
-                    FlightDriver.SetPause(true);
-                }
+                //                 if (autoPauseOnNew && style.normal.textColor == Color.green)
+                //                 {
+                //                     //activate pause
+                //                     TimeWarp.SetRate(0, true);
+                //                     FlightDriver.SetPause(true);
+                //                 }
             }
             GUILayout.EndVertical();
         }
@@ -269,6 +293,7 @@ public class KSPScienceMonitor : MonoBehaviour
         GUILayout.BeginHorizontal();
         GUILayout.Space(20);
         GUILayout.EndHorizontal();
+        GUILayout.Space(20);
         if (GUI.Button(new Rect(windowPosition.width - 20, 0, 20, 20), "X"))
             drawWindow = false;
         if (GUI.RepeatButton(new Rect(windowPosition.width - 20, windowPosition.height - 20, 20, 20), "\u21d8"))

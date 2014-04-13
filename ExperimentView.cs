@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using UnityEngine;
 
 internal class ExperimentView : IEquatable<ExperimentView>, IComparable<ExperimentView>
@@ -28,11 +26,11 @@ internal class ExperimentView : IEquatable<ExperimentView>, IComparable<Experime
 
     public ExperimentView(ScienceData scienceData, bool onShip = true)
     {
-        //var subject = ResearchAndDevelopment.GetSubjectByID(scienceData.subjectID);
+        ScienceSubject scienceSubject = ResearchAndDevelopment.GetSubjectByID(scienceData.subjectID);
         _fullExperimentId = scienceData.subjectID;
         _onShip = onShip;
-        _earnedScience = 0;
-        _fullScience = 0; //subject.scienceCap
+        _earnedScience = scienceData.dataAmount;
+        _fullScience = scienceSubject.scienceCap;
     }
 
     public string FullExperimentId
@@ -55,6 +53,24 @@ internal class ExperimentView : IEquatable<ExperimentView>, IComparable<Experime
         get { return _fullScience; }
     }
 
+
+    public int CompareTo(ExperimentView other)
+    {
+        MonoBehaviour.print("CompareTo");
+        string[] splitx = _fullExperimentId.Split('@');
+        string[] splity = other._fullExperimentId.Split('@');
+
+        if (splitx[0] == splity[0])
+        {
+            if (_onShip && !other._onShip)
+                return 1;
+            if (other._onShip && !_onShip)
+                return -1;
+            return 0;
+        }
+        return splitx[0].CompareTo(splity[0]);
+    }
+
     public bool Equals(ExperimentView other)
     {
         if (other == null) return false;
@@ -67,27 +83,5 @@ internal class ExperimentView : IEquatable<ExperimentView>, IComparable<Experime
             }
         }
         return false;
-    }
-
-
-
-    public int CompareTo(ExperimentView other)
-    {
-        MonoBehaviour.print("CompareTo");
-        string[] splitx = this._fullExperimentId.Split('@');
-        string[] splity = other._fullExperimentId.Split('@');
-
-        if (splitx[0] == splity[0])
-        {
-            if (this._onShip && !other._onShip)
-                return 1;
-            if (other._onShip && !this._onShip)
-                return -1;
-            return 0;
-        }
-        else
-        {
-            return splitx[0].CompareTo(splity[0]);
-        }
     }
 }
