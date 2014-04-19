@@ -17,7 +17,6 @@ public class KSPScienceMonitor : MonoBehaviour
     private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
 
-
     // whether it should pause game at new science
     // private bool autoPauseOnNew;
 
@@ -246,29 +245,28 @@ public class KSPScienceMonitor : MonoBehaviour
                         GUILayout.Label(ScienceValue.ToString(), style);
                         break;
                     case 1:
-                        {
-                            string strout = Math.Round(experimentView.EarnedScience, 2).ToString();
-                            if (strout == "0") strout = "-";
-                            GUILayout.Label(strout, style);
-                        }
+                    {
+                        string strout = Math.Round(experimentView.EarnedScience, 2).ToString();
+                        if (strout == "0") strout = "-";
+                        GUILayout.Label(strout, style);
+                    }
                         break;
                     case 2:
-                        {
-                            string strout = Math.Round(experimentView.FullScience, 2).ToString();
-                            if (strout == "0") strout = "-";
-                            GUILayout.Label(strout, style);
-                        }
+                    {
+                        string strout = Math.Round(experimentView.FullScience, 2).ToString();
+                        if (strout == "0") strout = "-";
+                        GUILayout.Label(strout, style);
+                    }
                         break;
                     case 3:
-                        double percent = (experimentView.FullScience - experimentView.EarnedScience) / experimentView.FullScience * 100;
+                        double percent = (experimentView.FullScience - experimentView.EarnedScience)/experimentView.FullScience*100;
                         if (percent >= 30)
                         {
                             Color b = style.normal.textColor;
                             style.normal.textColor = Color.green;
                             GUILayout.Label(Math.Round(percent) + "%", style);
                             style.normal.textColor = b;
-                        }
-                        else
+                        } else
                         {
                             GUILayout.Label(Math.Round(percent) + "%", style);
                         }

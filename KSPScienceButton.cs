@@ -1,15 +1,17 @@
-﻿using UnityEngine;
-using Toolbar;
+﻿using Toolbar;
+using UnityEngine;
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
 public class KSPScienceButton : MonoBehaviour
 {
-    private IButton toolbarKSPScienceButton;
+    private readonly IButton toolbarKSPScienceButton;
+    private string imgEnabledPath = "KSPScienceLibrary/img1l";
+    private string imgPressedPath = "KSPScienceLibrary/img2l";
 
     internal KSPScienceButton()
     {
         toolbarKSPScienceButton = ToolbarManager.Instance.add("ScienceLibrary", "toolbarKSPScienceButton");
-        toolbarKSPScienceButton.TexturePath = "ScienceLibrary/img1l";
+        toolbarKSPScienceButton.TexturePath = imgEnabledPath;
         toolbarKSPScienceButton.ToolTip = "ScienceLibrary";
         toolbarKSPScienceButton.Visible = true;
         toolbarKSPScienceButton.OnClick += button1_OnClick;
@@ -24,7 +26,7 @@ public class KSPScienceButton : MonoBehaviour
 
     public void UpdateIcon(bool drawWindow)
     {
-        toolbarKSPScienceButton.TexturePath = drawWindow ? "ScienceLibrary/img2l" : "ScienceLibrary/img1l";
+        toolbarKSPScienceButton.TexturePath = drawWindow ? imgPressedPath : imgEnabledPath;
     }
 
     internal void OnDestroy()
@@ -34,4 +36,3 @@ public class KSPScienceButton : MonoBehaviour
         toolbarKSPScienceButton.Destroy();
     }
 }
-

@@ -5,11 +5,13 @@ using UnityEngine;
 public class KSPScienceMonitorButton : MonoBehaviour
 {
     private readonly IButton toolbarKSPScienceMonitorButton;
+    private string imgEnabledPath = "KSPScienceLibrary/img1m";
+    private string imgPressedPath = "KSPScienceLibrary/img2m";
 
     internal KSPScienceMonitorButton()
     {
         toolbarKSPScienceMonitorButton = ToolbarManager.Instance.add("ScienceLibrary", "toolbarKSPScienceMonitorButton");
-        toolbarKSPScienceMonitorButton.TexturePath = "ScienceLibrary/img1m";
+        toolbarKSPScienceMonitorButton.TexturePath = imgEnabledPath;
         toolbarKSPScienceMonitorButton.ToolTip = "ScienceLibrary Monitor";
         toolbarKSPScienceMonitorButton.Visible = true;
         toolbarKSPScienceMonitorButton.OnClick += KSPScienceMonitorButton_OnClick;
@@ -24,7 +26,7 @@ public class KSPScienceMonitorButton : MonoBehaviour
 
     public void UpdateIcon(bool drawWindow)
     {
-        toolbarKSPScienceMonitorButton.TexturePath = drawWindow ? "ScienceLibrary/img2m" : "ScienceLibrary/img1m";
+        toolbarKSPScienceMonitorButton.TexturePath = drawWindow ? imgPressedPath : imgEnabledPath;
     }
 
     internal void OnDestroy()
@@ -34,4 +36,3 @@ public class KSPScienceMonitorButton : MonoBehaviour
         toolbarKSPScienceMonitorButton.Destroy();
     }
 }
-

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
 public class KSPScienceLibrary : MonoBehaviour
 {
@@ -287,7 +285,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
         foreach (string id in exIds)
         {
-            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof(ExperimentSituations)))
+            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
             {
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
@@ -340,7 +338,7 @@ public class KSPScienceLibrary : MonoBehaviour
             CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => celestialBody.name == body);
 
             double datavalue = Experiment.ScienceDataValue(thisBody, situation);
-            Experiment ex = new Experiment(newExperiment, 0, Math.Round(experiment.scienceCap * datavalue, 2), body, experimentFirstText);
+            Experiment ex = new Experiment(newExperiment, 0, Math.Round(experiment.scienceCap*datavalue, 2), body, experimentFirstText);
             dataOutputList.Add(ex);
         }
         dataOutputList.Sort(SortByName);
@@ -456,7 +454,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public static ExperimentSituations FindExperimentSituation(string experimentSecondText)
     {
-        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof(ExperimentSituations)))
+        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
             if (experimentSecondText.Contains(experimentSituation.ToString()))
                 return experimentSituation;
         throw new Exception("Error in FindExperimentSituation: Can't find situation in '" + experimentSecondText + "'");
