@@ -15,7 +15,7 @@ public class KSPScienceButton : MonoBehaviour
         toolbarKSPScienceButton.ToolTip = "ScienceLibrary";
         toolbarKSPScienceButton.Visible = true;
         toolbarKSPScienceButton.OnClick += button1_OnClick;
-        KSPScienceLibrary.toolbarButton = (KSPScienceButton) toolbarKSPScienceButton;
+        KSPScienceLibrary.toolbarButton = this;
         toolbarKSPScienceButton.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER, GameScenes.FLIGHT);
     }
 

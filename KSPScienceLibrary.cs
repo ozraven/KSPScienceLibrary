@@ -299,9 +299,8 @@ public class KSPScienceLibrary : MonoBehaviour
                         bool shouldHaveBiome = experiment.BiomeIsRelevantWhile(experimentSituation);
                         if (shouldHaveBiome)
                         {
-                            foreach (CBAttributeMap.MapAttribute mapAttribute in body.BiomeMap.Attributes)
+                            foreach (string biome in ResearchAndDevelopment.GetBiomeTags(body))
                             {
-                                string biome = mapAttribute.name.Replace(" ", string.Empty);
                                 ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
                                 newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, biome));
                             }
@@ -323,7 +322,7 @@ public class KSPScienceLibrary : MonoBehaviour
         List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
         foreach (ScienceSubject scienceSubject in subjectslist)
         {
-            newExperiments.Remove(scienceSubject);
+            newExperiments.RemoveAll(subject => subject.id == scienceSubject.id);
             string title = scienceSubject.id;
             double earned = Math.Round(scienceSubject.science, 1);
             double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 1);
@@ -335,8 +334,8 @@ public class KSPScienceLibrary : MonoBehaviour
 
         foreach (ScienceSubject newExperiment in newExperiments)
         {
-            CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => newExperiment.id.Split('@')[0].StartsWith(celestialBody.name));
-            Experiment ex = new Experiment(newExperiment.id, 0, Math.Round(newExperiment.scienceCap,1), thisBody.name, newExperiment.id.Split('@')[0]);
+            CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => newExperiment.id.Split('@')[1].StartsWith(celestialBody.name));
+            Experiment ex = new Experiment(newExperiment.id, 0, Math.Round(newExperiment.scienceCap, 1), thisBody.name, newExperiment.id.Split('@')[0]);
             dataOutputList.Add(ex);
         }
         dataOutputList.Sort(SortByName);
