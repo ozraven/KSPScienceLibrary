@@ -322,16 +322,16 @@ public class KSPScienceLibrary : MonoBehaviour
             string title = scienceSubject.id;
             double earned = Math.Round(scienceSubject.science, 2);
             double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 2);
-            string body = FindExperimentBody(scienceSubject.id.Substring(scienceSubject.id.IndexOf("@") + 1));
-            string type = scienceSubject.id.Substring(0, scienceSubject.id.IndexOf("@"));
+            string body = FindExperimentBody(scienceSubject.id.Split('@')[1]);
+            string type = scienceSubject.id.Split('@')[0];
             Experiment experiment = new Experiment(title, earned, remain, body, type);
             dataOutputList.Add(experiment);
         }
 
         foreach (string newExperiment in newExperiments)
         {
-            string experimentSecondText = newExperiment.Substring(newExperiment.IndexOf("@") + 1);
-            string experimentFirstText = newExperiment.Substring(0, newExperiment.IndexOf("@"));
+            string experimentSecondText = newExperiment.Split('@')[1];
+            string experimentFirstText = newExperiment.Split('@')[0];
             string body = FindExperimentBody(experimentSecondText);
             ExperimentSituations situation = FindExperimentSituation(experimentSecondText);
             ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(experimentFirstText);
@@ -368,9 +368,7 @@ public class KSPScienceLibrary : MonoBehaviour
         foreach (Experiment experiment in input)
         {
             if (experiment.FirstIdType == type)
-            {
                 selectedExperimentsTemp.Add(experiment);
-            }
         }
         return selectedExperimentsTemp;
     }
@@ -380,12 +378,8 @@ public class KSPScienceLibrary : MonoBehaviour
         List<string> selectedExperimentTypesTemp = new List<string>();
         foreach (Experiment experiment in dataOutputList)
         {
-            if (selectedExperimentTypesTemp.Contains(experiment.FirstIdType))
-            {
-            } else
-            {
+            if (!selectedExperimentTypesTemp.Contains(experiment.FirstIdType))
                 selectedExperimentTypesTemp.Add(experiment.FirstIdType);
-            }
         }
         selectedExperimentTypesTemp.Sort();
         return selectedExperimentTypesTemp;
