@@ -1,11 +1,11 @@
 ﻿using System;
-using UnityEngine;
 
 internal class ExperimentView : IEquatable<ExperimentView>, IComparable<ExperimentView>
 {
     private readonly float _earnedScience;
     private readonly string _fullExperimentId;
     private readonly float _fullScience;
+    private readonly float _nextExperimentScience;
     private readonly bool _onShip;
 
     //     public ExperimentView(string fullExperimentId, bool onShip, float earnedScience, float fullScience)
@@ -22,6 +22,8 @@ internal class ExperimentView : IEquatable<ExperimentView>, IComparable<Experime
         _onShip = onShip;
         _earnedScience = scienceSubject.science;
         _fullScience = scienceSubject.scienceCap;
+        ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(scienceSubject.id.Split('@')[0]);
+        _nextExperimentScience = ResearchAndDevelopment.GetScienceValue(scienceExperiment.baseValue*scienceExperiment.dataScale, scienceSubject);
     }
 
     public ExperimentView(ScienceData scienceData, bool onShip = true)
@@ -29,8 +31,9 @@ internal class ExperimentView : IEquatable<ExperimentView>, IComparable<Experime
         ScienceSubject scienceSubject = ResearchAndDevelopment.GetSubjectByID(scienceData.subjectID);
         _fullExperimentId = scienceData.subjectID;
         _onShip = onShip;
-        _earnedScience = scienceData.dataAmount;
-        _fullScience = scienceSubject.scienceCap;
+        _earnedScience = ResearchAndDevelopment.GetScienceValue(scienceData.dataAmount, scienceSubject);
+        _fullScience = 0;
+        _nextExperimentScience = 0;
     }
 
     public string FullExperimentId
@@ -53,10 +56,13 @@ internal class ExperimentView : IEquatable<ExperimentView>, IComparable<Experime
         get { return _fullScience; }
     }
 
+    public float NextExperimentScience
+    {
+        get { return _nextExperimentScience; }
+    }
 
     public int CompareTo(ExperimentView other)
     {
-        MonoBehaviour.print("CompareTo");
         string[] splitx = _fullExperimentId.Split('@');
         string[] splity = other._fullExperimentId.Split('@');
 

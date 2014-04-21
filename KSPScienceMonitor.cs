@@ -104,8 +104,7 @@ public class KSPScienceMonitor : MonoBehaviour
                         }
                     }
                     {
-                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
-                            scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        ScienceSubject scienceSubject = Experiment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
                         ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
@@ -122,8 +121,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
                     if (available)
                     {
-                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
-                            scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        ScienceSubject scienceSubject = Experiment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
                         ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
@@ -135,8 +133,7 @@ public class KSPScienceMonitor : MonoBehaviour
                     bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
                     if (available)
                     {
-                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody,
-                            scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        ScienceSubject scienceSubject = Experiment.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
                         ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
@@ -158,8 +155,7 @@ public class KSPScienceMonitor : MonoBehaviour
                         if (available)
                         {
                             string asteroidname = asteroid.part.partInfo.name + asteroid.part.flightID;
-                            ScienceSubject scienceSubject = ResearchAndDevelopment.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody,
-                                scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                            ScienceSubject scienceSubject = Experiment.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
                             ExperimentView experimentView = new ExperimentView(scienceSubject);
                             if (!Output.Contains(experimentView))
                                 Output.Add(experimentView);
@@ -202,7 +198,7 @@ public class KSPScienceMonitor : MonoBehaviour
 
 
         GUILayout.BeginHorizontal();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i <= 5; i++)
         {
             GUILayout.BeginVertical();
             switch (i)
@@ -222,6 +218,9 @@ public class KSPScienceMonitor : MonoBehaviour
                 case 4:
                     GUILayout.Label("OnShip");
                     break;
+                case 5:
+                    GUILayout.Label("NextExp");
+                    break;
             }
             foreach (ExperimentView experimentView in Output)
             {
@@ -240,9 +239,6 @@ public class KSPScienceMonitor : MonoBehaviour
                 {
                     case 0:
                         GUILayout.Label(experimentView.FullExperimentId, style);
-                        ScienceSubject scienceSubject = ResearchAndDevelopment.GetSubjectByID(experimentView.FullExperimentId);
-                        float ScienceValue = ResearchAndDevelopment.GetScienceValue(30, scienceSubject);
-                        GUILayout.Label(ScienceValue.ToString(), style);
                         break;
                     case 1:
                     {
@@ -260,7 +256,10 @@ public class KSPScienceMonitor : MonoBehaviour
                         break;
                     case 3:
                         double percent = (experimentView.FullScience - experimentView.EarnedScience)/experimentView.FullScience*100;
-                        if (percent >= 30)
+                        if (experimentView.FullScience == 0)
+                        {
+                            GUILayout.Label("-", style);
+                        } else if (percent >= 30)
                         {
                             Color b = style.normal.textColor;
                             style.normal.textColor = Color.green;
@@ -273,6 +272,13 @@ public class KSPScienceMonitor : MonoBehaviour
                         break;
                     case 4:
                         GUILayout.Label(experimentView.OnShip ? "\u221a" : " ", style);
+                        break;
+                    case 5:
+                    {
+                        string strout = Math.Round(experimentView.NextExperimentScience, 2).ToString();
+                        if (strout == "0") strout = "-";
+                        GUILayout.Label(strout, style);
+                    }
                         break;
                 }
                 //                 if (autoPauseOnNew && style.normal.textColor == Color.green)

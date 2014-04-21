@@ -44,4 +44,39 @@ public struct Experiment
                 throw new ArgumentOutOfRangeException("situation");
         }
     }
+
+    /// <summary>
+    /// Replace for ResearchAndDevelopment.GetExperimentSubject function. Original function inserts new ScienceSubject in the database, but we do not want that.
+    /// </summary>
+    /// <param name="experiment"></param>
+    /// <param name="situation"></param>
+    /// <param name="body"></param>
+    /// <param name="biome"></param>
+    /// <returns></returns>
+    public static ScienceSubject GetExperimentSubject(ScienceExperiment experiment, ExperimentSituations situation, CelestialBody body, string biome)
+    {
+        ScienceSubject scienceSubject = new ScienceSubject(experiment, situation, body, biome);
+        ScienceSubject subject = ResearchAndDevelopment.GetSubjectByID(scienceSubject.id); // this will cause error in log, but it is intended behavior.
+        if (subject != null)
+            return subject;
+        return scienceSubject;
+    }
+    /// <summary>
+    /// Replace for ResearchAndDevelopment.GetExperimentSubject function. Original function inserts new ScienceSubject in the database, but we do not want that.
+    /// </summary>
+    /// <param name="experiment"></param>
+    /// <param name="situation"></param>
+    /// <param name="sourceUId"></param>
+    /// <param name="sourceTitle"></param>
+    /// <param name="body"></param>
+    /// <param name="biome"></param>
+    /// <returns></returns>
+    public static ScienceSubject GetExperimentSubject(ScienceExperiment experiment, ExperimentSituations situation, string sourceUId, string sourceTitle, CelestialBody body, string biome)
+    {
+        ScienceSubject scienceSubject = new ScienceSubject(experiment, situation, sourceUId, sourceTitle, body, biome);
+        ScienceSubject subject = ResearchAndDevelopment.GetSubjectByID(scienceSubject.id); // this will cause error in log, but it is intended behavior.
+        if (subject != null)
+            return subject;
+        return scienceSubject;
+    }
 }
