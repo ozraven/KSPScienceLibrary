@@ -280,7 +280,7 @@ public class KSPScienceLibrary : MonoBehaviour
             return;
 
         dataOutputList = new List<Experiment>();
-        List<string> newExperiments = new List<string>();
+        List<ScienceSubject> newExperiments = new List<ScienceSubject>();
         List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
 
         foreach (string id in exIds)
@@ -302,13 +302,18 @@ public class KSPScienceLibrary : MonoBehaviour
                             foreach (CBAttributeMap.MapAttribute mapAttribute in body.BiomeMap.Attributes)
                             {
                                 string biome = mapAttribute.name.Replace(" ", string.Empty);
-                                newExperiments.Add(id + "@" + body.name + experimentSituation + biome);
+                                ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
+                                newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, biome));
                             }
                             if (body.BiomeMap.Attributes.Length == 0)
-                                newExperiments.Add(id + "@" + body.name + experimentSituation);
+                            {
+                                ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
+                                newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, ""));
+                            }
                         } else
                         {
-                            newExperiments.Add(id + "@" + body.name + experimentSituation);
+                            ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
+                            newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, ""));
                         }
                     }
                 }
@@ -318,27 +323,20 @@ public class KSPScienceLibrary : MonoBehaviour
         List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
         foreach (ScienceSubject scienceSubject in subjectslist)
         {
-            newExperiments.Remove(scienceSubject.id);
+            newExperiments.Remove(scienceSubject);
             string title = scienceSubject.id;
-            double earned = Math.Round(scienceSubject.science, 2);
-            double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 2);
+            double earned = Math.Round(scienceSubject.science, 1);
+            double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 1);
             string body = FindExperimentBody(scienceSubject.id.Split('@')[1]);
             string type = scienceSubject.id.Split('@')[0];
             Experiment experiment = new Experiment(title, earned, remain, body, type);
             dataOutputList.Add(experiment);
         }
 
-        foreach (string newExperiment in newExperiments)
+        foreach (ScienceSubject newExperiment in newExperiments)
         {
-            string experimentSecondText = newExperiment.Split('@')[1];
-            string experimentFirstText = newExperiment.Split('@')[0];
-            string body = FindExperimentBody(experimentSecondText);
-            ExperimentSituations situation = FindExperimentSituation(experimentSecondText);
-            ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(experimentFirstText);
-            CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => celestialBody.name == body);
-
-            double datavalue = Experiment.ScienceDataValue(thisBody, situation);
-            Experiment ex = new Experiment(newExperiment, 0, Math.Round(experiment.scienceCap*datavalue, 2), body, experimentFirstText);
+            CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => newExperiment.id.Split('@')[0].StartsWith(celestialBody.name));
+            Experiment ex = new Experiment(newExperiment.id, 0, Math.Round(newExperiment.scienceCap,1), thisBody.name, newExperiment.id.Split('@')[0]);
             dataOutputList.Add(ex);
         }
         dataOutputList.Sort(SortByName);

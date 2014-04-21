@@ -242,14 +242,14 @@ public class KSPScienceMonitor : MonoBehaviour
                         break;
                     case 1:
                     {
-                        string strout = Math.Round(experimentView.EarnedScience, 2).ToString();
+                        string strout = Math.Round(experimentView.EarnedScience, 1).ToString();
                         if (strout == "0") strout = "-";
                         GUILayout.Label(strout, style);
                     }
                         break;
                     case 2:
                     {
-                        string strout = Math.Round(experimentView.FullScience, 2).ToString();
+                        string strout = Math.Round(experimentView.FullScience, 1).ToString();
                         if (strout == "0") strout = "-";
                         GUILayout.Label(strout, style);
                     }
@@ -275,7 +275,7 @@ public class KSPScienceMonitor : MonoBehaviour
                         break;
                     case 5:
                     {
-                        string strout = Math.Round(experimentView.NextExperimentScience, 2).ToString();
+                        string strout = Math.Round(experimentView.NextExperimentScience, 1).ToString();
                         if (strout == "0") strout = "-";
                         GUILayout.Label(strout, style);
                     }

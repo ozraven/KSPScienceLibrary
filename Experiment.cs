@@ -20,7 +20,7 @@ public struct Experiment
     public override string ToString()
     {
         if (remain > 0 || earned > 0)
-            return fullName + " " + Math.Round(earned, 2) + " " + Math.Round(remain, 2);
+            return fullName + " " + Math.Round(earned, 1) + " " + Math.Round(remain, 1);
         return fullName + " " + "-" + " " + "-";
     }
 
