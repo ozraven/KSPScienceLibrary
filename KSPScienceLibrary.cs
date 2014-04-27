@@ -334,6 +334,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
         foreach (ScienceSubject newExperiment in newExperiments)
         {
+            newExperiment.scientificValue = 1f;
             CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => newExperiment.id.Split('@')[1].StartsWith(celestialBody.name));
             Experiment ex = new Experiment(newExperiment.id, 0, Math.Round(newExperiment.scienceCap, 1), thisBody.name, newExperiment.id.Split('@')[0]);
             dataOutputList.Add(ex);
