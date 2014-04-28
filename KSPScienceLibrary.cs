@@ -301,18 +301,21 @@ public class KSPScienceLibrary : MonoBehaviour
                         {
                             foreach (string biome in ResearchAndDevelopment.GetBiomeTags(body))
                             {
-                                ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
-                                newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, biome));
+                                ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, biome);
+                                if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
+                                newExperiments.Add(ssj);
                             }
                             if (body.BiomeMap.Attributes.Length == 0)
                             {
-                                ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
-                                newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, ""));
+                                ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, "");
+                                if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
+                                newExperiments.Add(ssj);
                             }
                         } else
                         {
-                            ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(id);
-                            newExperiments.Add(new ScienceSubject(scienceExperiment, experimentSituation, body, ""));
+                            ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, "");
+                            if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
+                            newExperiments.Add(ssj);
                         }
                     }
                 }
