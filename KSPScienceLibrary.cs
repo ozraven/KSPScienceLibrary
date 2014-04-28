@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 [KSPAddon(KSPAddon.Startup.EveryScene, false)]
@@ -9,6 +10,7 @@ public class KSPScienceLibrary : MonoBehaviour
     private static Rect windowPosition = new Rect(5, 20, Screen.width - 10, Screen.height - 80);
     private static GUIStyle windowStyle;
     public static bool drawWindow = false;
+    private static string version = "";
     private List<string> allExperimentTypes = new List<string>();
     //private bool autoDeploy = false;
     //private CelestialBody[] bodies = null;
@@ -41,6 +43,9 @@ public class KSPScienceLibrary : MonoBehaviour
         drawWindow = false;
         selectedBody = "All";
         selectedExperiments = dataOutputList;
+
+        System.Version ver = Assembly.GetAssembly(typeof (KSPScienceLibrary)).GetName().Version;
+        version = "Version " + ver.Major + "." + ver.Minor + "   Build " + ver.Build + "." + ver.Revision;
     }
 
     public void OnDestroy()
@@ -71,7 +76,7 @@ public class KSPScienceLibrary : MonoBehaviour
         }
 
         if (drawWindow)
-            windowPosition = GUI.Window(2345, windowPosition, OnWindow, "Science Library", windowStyle);
+            windowPosition = GUI.Window(2345, windowPosition, OnWindow, "Science Library " + version, windowStyle);
 
 
         lastdrawWindow = drawWindow;
