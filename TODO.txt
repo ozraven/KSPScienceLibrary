@@ -1,0 +1,8 @@
+﻿add settings to toggle show/hide some fonctions
+add button to execute experiment /toggle
+add settings for colors
+add library in VAB (possible problems with click through)
+hide biomes, that did not discovered (at least one experiment done on such biome) /toggle
+hide experiments the same way /toggle
+replace experiment names
+add replacement for new experiments names
