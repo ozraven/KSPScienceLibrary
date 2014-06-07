@@ -297,6 +297,8 @@ public class KSPScienceLibrary : MonoBehaviour
                     bool ocean = body.ocean;
                     if (ExperimentSituations.SrfSplashed == experimentSituation && !ocean)
                         continue;
+                    if ((ExperimentSituations.FlyingHigh == experimentSituation || ExperimentSituations.FlyingLow == experimentSituation) && !body.atmosphere)
+                        continue;
                     ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(id);
                     bool available = experiment.IsAvailableWhile(experimentSituation, body);
                     if (available)
@@ -334,7 +336,7 @@ public class KSPScienceLibrary : MonoBehaviour
             string title = scienceSubject.id;
             double earned = Math.Round(scienceSubject.science, 1);
             double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 1);
-            string body = FindExperimentBody(scienceSubject.id.Split('@')[1]);
+            string body = LibraryUtils.FindExperimentBody(scienceSubject.id.Split('@')[1]);
             string type = scienceSubject.id.Split('@')[0];
             Experiment experiment = new Experiment(title, earned, remain, body, type);
             dataOutputList.Add(experiment);
@@ -441,36 +443,5 @@ public class KSPScienceLibrary : MonoBehaviour
         if (o1.earned == 0 || o2.earned == 0)
             return o2.earned.CompareTo(o1.earned);
         return o1.FirstIdType.CompareTo(o2.FirstIdType);
-    }
-
-    public static string FindBiome(string experimentSecondText, ExperimentSituations situation)
-    {
-        string situationStr = situation.ToString();
-        int offset = experimentSecondText.IndexOf(situationStr) + situationStr.Length;
-        if (offset == experimentSecondText.Length)
-            return "";
-        return experimentSecondText.Substring(offset);
-    }
-
-    public static ExperimentSituations FindExperimentSituation(string experimentSecondText)
-    {
-        foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
-            if (experimentSecondText.Contains(experimentSituation.ToString()))
-                return experimentSituation;
-        throw new Exception("Error in FindExperimentSituation: Can't find situation in '" + experimentSecondText + "'");
-        //return null;
-    }
-
-    public static string FindExperimentBody(string experimentSecondText)
-    {
-        int firstUpperCase = 0;
-        for (int i = 1; i < experimentSecondText.Length; i++)
-        {
-            if (char.IsUpper(experimentSecondText[i]) && firstUpperCase == 0)
-            {
-                firstUpperCase = i;
-            }
-        }
-        return experimentSecondText.Substring(0, firstUpperCase);
     }
 }
