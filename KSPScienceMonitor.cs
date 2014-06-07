@@ -6,7 +6,7 @@ using UnityEngine;
 public class KSPScienceMonitor : MonoBehaviour
 {
     public static KSPScienceMonitorButton toolbarButton;
-    private static Rect windowPosition = new Rect(0, 0, 600, 200);
+    private static Rect windowPosition;
     private static GUIStyle windowStyle;
 
     public static bool drawWindow = false;
@@ -16,7 +16,7 @@ public class KSPScienceMonitor : MonoBehaviour
     // List of science to show on window
     private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
-
+    private readonly Dictionary<string, bool[]> idsList = new Dictionary<string, bool[]>();
     // whether it should pause game at new science
     // private bool autoPauseOnNew;
 
@@ -35,7 +35,7 @@ public class KSPScienceMonitor : MonoBehaviour
 
     public void Awake()
     {
-        RenderingManager.AddToPostDrawQueue(0, OnDraw);
+        RenderingManager.AddToPostDrawQueue(2, OnDraw);
     }
 
     public void Start()
@@ -43,6 +43,8 @@ public class KSPScienceMonitor : MonoBehaviour
         windowStyle = new GUIStyle(HighLogic.Skin.window);
         windowStyle.stretchHeight = true;
         windowStyle.stretchWidth = true;
+
+        windowPosition = KSPScienceSettings.getRectSetting("MonitorRect");
     }
 
     public void Update()
@@ -54,7 +56,6 @@ public class KSPScienceMonitor : MonoBehaviour
             windowPosition.width = Input.mousePosition.x - windowPosition.x + 10;
             windowPosition.height = (Screen.height - Input.mousePosition.y) - windowPosition.y + 10;
         }
-
         // using "while" for possibility to "break". So we dont have to use GOTO. using timer to skip frames.
         while (drawWindow && (lateUpdateTimer < Time.time || lateUpdateTimerCounter > 3))
         {
@@ -186,7 +187,10 @@ public class KSPScienceMonitor : MonoBehaviour
         if (toolbarButton != null)
             toolbarButton.UpdateIcon(drawWindow);
         if (drawWindow)
+        {
             windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
+            KSPScienceSettings.setRectSetting("MonitorRect", windowPosition);
+        }
     }
 
     private void OnWindow(int windowID)
@@ -196,13 +200,20 @@ public class KSPScienceMonitor : MonoBehaviour
         //         GUILayout.EndHorizontal();
         scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
 
+        foreach (KeyValuePair<string, bool[]> keyValuePair in idsList)
+        {
+            keyValuePair.Value[0] = false;
+        }
 
         GUILayout.BeginHorizontal();
-        for (int i = 0; i <= 5; i++)
+        for (int i = -1; i <= 5; i++)
         {
             GUILayout.BeginVertical();
             switch (i)
             {
+                case -1:
+                    GUILayout.Label("");
+                    break;
                 case 0:
                     GUILayout.Label("ID");
                     break;
@@ -226,18 +237,42 @@ public class KSPScienceMonitor : MonoBehaviour
             {
                 GUIStyle style = new GUIStyle();
                 if (experimentView.OnShip)
-                    style.normal.textColor = Color.yellow;
+                    style = KSPScienceSettings.getStyleSetting("MonitorOnShipExperiments");
                 else if (experimentView.EarnedScience > 0)
-                    style.normal.textColor = Color.red;
+                    style = KSPScienceSettings.getStyleSetting("MonitorKSCExperiments");
                 else
                 {
-                    style.normal.textColor = Color.green;
+                    style = KSPScienceSettings.getStyleSetting("MonitorNewExperiments");
                     if (OnShip.Exists(view => view.FullExperimentId == experimentView.FullExperimentId))
                         continue;
                 }
+                string firstid = experimentView.FullExperimentId.Substring(0, experimentView.FullExperimentId.IndexOf("@"));
+                if (!idsList.ContainsKey(firstid))
+                    idsList.Add(firstid, new bool[2]);
+                bool[] bools = idsList[firstid];
                 switch (i)
                 {
+                    case -1:
+                    {
+                        if (!bools[0])
+                        {
+                            bools[1] = GUILayout.Toggle(bools[1], bools[1] ? "+" : "-", style);
+                            bools[0] = true;
+                        } else
+                        {
+                            if (bools[1])
+                            {
+                                break;
+                            }
+                            GUILayout.Label(" |", style);
+                        }
+                    }
+                        break;
                     case 0:
+                        if (bools[1] && bools[0])
+                        {
+                            break;
+                        }
                         GUILayout.Label(experimentView.FullExperimentId, style);
                         break;
                     case 1:
@@ -261,10 +296,10 @@ public class KSPScienceMonitor : MonoBehaviour
                             GUILayout.Label("-", style);
                         } else if (percent >= 30)
                         {
-                            Color b = style.normal.textColor;
-                            style.normal.textColor = Color.green;
+                            GUIStyle tmpstyle = style;
+                            style = KSPScienceSettings.getStyleSetting("MonitorNewExperiments");
                             GUILayout.Label(Math.Round(percent) + "%", style);
-                            style.normal.textColor = b;
+                            style = tmpstyle;
                         } else
                         {
                             GUILayout.Label(Math.Round(percent) + "%", style);
@@ -298,9 +333,13 @@ public class KSPScienceMonitor : MonoBehaviour
         GUILayout.Space(20);
         GUILayout.EndHorizontal();
         GUILayout.Space(20);
-        if (GUI.Button(new Rect(windowPosition.width - 20, 0, 20, 20), "X"))
+        if (GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
+        {
+            KSPScienceSettings.toggle();
+        }
+        if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
             drawWindow = false;
-        if (GUI.RepeatButton(new Rect(windowPosition.width - 20, windowPosition.height - 20, 20, 20), "\u21d8"))
+        if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
@@ -308,6 +347,6 @@ public class KSPScienceMonitor : MonoBehaviour
     public void OnDestroy()
     {
         print("Destroy Science Monitor");
-        RenderingManager.RemoveFromPostDrawQueue(0, OnDraw);
+        RenderingManager.RemoveFromPostDrawQueue(2, OnDraw);
     }
 }

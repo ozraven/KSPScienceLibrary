@@ -7,7 +7,7 @@ using UnityEngine;
 public class KSPScienceLibrary : MonoBehaviour
 {
     public static KSPScienceButton toolbarButton;
-    private static Rect windowPosition = new Rect(5, 20, Screen.width - 10, Screen.height - 80);
+    private static Rect windowPosition;
     private static GUIStyle windowStyle;
     public static bool drawWindow = false;
     private static string version = "";
@@ -31,7 +31,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public void Awake()
     {
-        RenderingManager.AddToPostDrawQueue(0, OnDraw);
+        RenderingManager.AddToPostDrawQueue(1, OnDraw);
     }
 
     public void Start()
@@ -46,12 +46,14 @@ public class KSPScienceLibrary : MonoBehaviour
 
         System.Version ver = Assembly.GetAssembly(typeof (KSPScienceLibrary)).GetName().Version;
         version = "Version " + ver.Major + "." + ver.Minor + "   Build " + ver.Build + "." + ver.Revision;
+
+        windowPosition = KSPScienceSettings.getRectSetting("LibraryRect");
     }
 
     public void OnDestroy()
     {
         print("Destroy Science Window");
-        RenderingManager.RemoveFromPostDrawQueue(0, OnDraw);
+        RenderingManager.RemoveFromPostDrawQueue(1, OnDraw);
     }
 
     public void Update()
@@ -76,7 +78,10 @@ public class KSPScienceLibrary : MonoBehaviour
         }
 
         if (drawWindow)
+        {
             windowPosition = GUI.Window(2345, windowPosition, OnWindow, "Science Library " + version, windowStyle);
+            KSPScienceSettings.setRectSetting("LibraryRect", windowPosition);
+        }
 
 
         lastdrawWindow = drawWindow;
@@ -220,14 +225,15 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.Space(20);
         GUILayout.BeginVertical();
         GUILayout.Label("TYPE");
-        GUIStyle style = new GUIStyle();
-        style.normal.textColor = Color.red;
+        GUIStyle styleNew = KSPScienceSettings.getStyleSetting("LibraryNewExperiments");
+        GUIStyle styleDone = KSPScienceSettings.getStyleSetting("LibraryDoneExperiments");
+
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
-                GUILayout.Label(experiment.FirstIdType, style);
+                GUILayout.Label(experiment.FirstIdType, styleNew);
             else
-                GUILayout.Label(experiment.FirstIdType);
+                GUILayout.Label(experiment.FirstIdType, styleDone);
         }
         GUILayout.EndVertical();
         GUILayout.BeginVertical();
@@ -235,9 +241,9 @@ public class KSPScienceLibrary : MonoBehaviour
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
-                GUILayout.Label(experiment.earned.ToString(), style);
+                GUILayout.Label(experiment.earned.ToString(), styleNew);
             else
-                GUILayout.Label(experiment.earned.ToString());
+                GUILayout.Label(experiment.earned.ToString(), styleDone);
         }
         GUILayout.EndVertical();
         GUILayout.BeginVertical();
@@ -245,9 +251,9 @@ public class KSPScienceLibrary : MonoBehaviour
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
-                GUILayout.Label(experiment.remain.ToString(), style);
+                GUILayout.Label(experiment.remain.ToString(), styleNew);
             else
-                GUILayout.Label(experiment.remain.ToString());
+                GUILayout.Label(experiment.remain.ToString(), styleDone);
         }
         GUILayout.EndVertical();
         GUILayout.Space(20);
@@ -256,9 +262,9 @@ public class KSPScienceLibrary : MonoBehaviour
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
-                GUILayout.Label(experiment.fullName, style);
+                GUILayout.Label(experiment.fullName, styleNew);
             else
-                GUILayout.Label(experiment.fullName);
+                GUILayout.Label(experiment.fullName, styleDone);
         }
         GUILayout.EndVertical();
         GUILayout.Space(20);
@@ -271,10 +277,13 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.EndHorizontal();
         GUILayout.EndArea();
 
-
-        if (GUI.Button(new Rect(windowPosition.width - 20, 0, 20, 20), "X"))
+        if (GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
+        {
+            KSPScienceSettings.toggle();
+        }
+        if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
             drawWindow = false;
-        if (GUI.RepeatButton(new Rect(windowPosition.width - 20, windowPosition.height - 20, 20, 20), "\u21d8"))
+        if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
