@@ -16,7 +16,7 @@ public class KSPScienceMonitor : MonoBehaviour
     // List of science to show on window
     private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
-    private readonly Dictionary<string, bool[]> idsList = new Dictionary<string, bool[]>();
+    //private readonly Dictionary<string, bool[]> idsList = new Dictionary<string, bool[]>();
     // whether it should pause game at new science
     // private bool autoPauseOnNew;
 
@@ -200,20 +200,13 @@ public class KSPScienceMonitor : MonoBehaviour
         //         GUILayout.EndHorizontal();
         scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
 
-        foreach (KeyValuePair<string, bool[]> keyValuePair in idsList)
-        {
-            keyValuePair.Value[0] = false;
-        }
 
         GUILayout.BeginHorizontal();
-        for (int i = -1; i <= 5; i++)
+        for (int i = 0; i <= 6; i++)
         {
             GUILayout.BeginVertical();
             switch (i)
             {
-                case -1:
-                    GUILayout.Label("");
-                    break;
                 case 0:
                     GUILayout.Label("ID");
                     break;
@@ -232,6 +225,10 @@ public class KSPScienceMonitor : MonoBehaviour
                 case 5:
                     GUILayout.Label("NextExp");
                     break;
+                case 6:
+                    if (KSPScienceSettings.getBoolSetting("ShowDeployButton"))
+                        GUILayout.Label("Deploy");
+                    break;
             }
             foreach (ExperimentView experimentView in Output)
             {
@@ -246,33 +243,9 @@ public class KSPScienceMonitor : MonoBehaviour
                     if (OnShip.Exists(view => view.FullExperimentId == experimentView.FullExperimentId))
                         continue;
                 }
-                string firstid = experimentView.FullExperimentId.Substring(0, experimentView.FullExperimentId.IndexOf("@"));
-                if (!idsList.ContainsKey(firstid))
-                    idsList.Add(firstid, new bool[2]);
-                bool[] bools = idsList[firstid];
                 switch (i)
                 {
-                    case -1:
-                    {
-                        if (!bools[0])
-                        {
-                            bools[1] = GUILayout.Toggle(bools[1], bools[1] ? "+" : "-", style);
-                            bools[0] = true;
-                        } else
-                        {
-                            if (bools[1])
-                            {
-                                break;
-                            }
-                            GUILayout.Label(" |", style);
-                        }
-                    }
-                        break;
                     case 0:
-                        if (bools[1] && bools[0])
-                        {
-                            break;
-                        }
                         GUILayout.Label(experimentView.FullExperimentId, style);
                         break;
                     case 1:
@@ -315,6 +288,45 @@ public class KSPScienceMonitor : MonoBehaviour
                         GUILayout.Label(strout, style);
                     }
                         break;
+                    case 6:
+                    {
+                        if (KSPScienceSettings.getBoolSetting("ShowDeployButton"))
+                        {
+                            GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+                            buttonStyle.margin = new RectOffset(0, 0, 0, 0);
+                            buttonStyle.normal.textColor = style.normal.textColor;
+                            if (experimentView.FullExperimentId.Split('@')[0] == "asteroidSample")
+                            {
+                                //ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
+                                //ModuleScienceContainer collector = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>().First<ModuleScienceContainer>();
+                                //will be added in next version.
+                                GUILayout.Button("------", buttonStyle, GUILayout.Height(15));
+                            } else
+                            {
+                                bool foundFreeSpaceForExperiment = false;
+                                ModuleScienceExperiment moduleScienceExperiment = null;
+                                foreach (ModuleScienceExperiment _moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
+                                {
+                                    if (_moduleScienceExperiment.experimentID == experimentView.FullExperimentId.Split('@')[0])
+                                    {
+                                        if (!_moduleScienceExperiment.Deployed && !_moduleScienceExperiment.Inoperable && _moduleScienceExperiment.GetScienceCount() == 0)
+                                        {
+                                            foundFreeSpaceForExperiment = true;
+                                            moduleScienceExperiment = _moduleScienceExperiment;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (foundFreeSpaceForExperiment)
+                                {
+                                    if (GUILayout.Button("deploy", buttonStyle, GUILayout.Height(15)))
+                                        moduleScienceExperiment.DeployExperiment();
+                                } else
+                                    GUILayout.Button("------", buttonStyle, GUILayout.Height(15));
+                            }
+                        }
+                    }
+                        break;
                 }
                 //                 if (autoPauseOnNew && style.normal.textColor == Color.green)
                 //                 {
@@ -334,11 +346,9 @@ public class KSPScienceMonitor : MonoBehaviour
         GUILayout.EndHorizontal();
         GUILayout.Space(20);
         if (GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
-        {
-            KSPScienceSettings.toggle();
-        }
+            KSPScienceSettings.Toggle();
         if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
-            drawWindow = false;
+            Hide();
         if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
@@ -346,7 +356,18 @@ public class KSPScienceMonitor : MonoBehaviour
 
     public void OnDestroy()
     {
-        print("Destroy Science Monitor");
+        //print("Destroy Science Monitor");
         RenderingManager.RemoveFromPostDrawQueue(2, OnDraw);
+    }
+
+    public static void Hide()
+    {
+        drawWindow = false;
+        KSPScienceSettings.Hide();
+    }
+
+    public static void Show()
+    {
+        drawWindow = true;
     }
 }

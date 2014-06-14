@@ -52,7 +52,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public void OnDestroy()
     {
-        print("Destroy Science Window");
+        //print("Destroy Science Window");
         RenderingManager.RemoveFromPostDrawQueue(1, OnDraw);
     }
 
@@ -65,6 +65,28 @@ public class KSPScienceLibrary : MonoBehaviour
             windowPosition.width = Input.mousePosition.x - windowPosition.x + 10;
             windowPosition.height = (Screen.height - Input.mousePosition.y) - windowPosition.y + 10;
         }
+        if (HighLogic.LoadedScene == GameScenes.EDITOR && drawWindow)
+        {
+            Vector3 mousePos = Input.mousePosition;
+            mousePos.y = (Screen.height - mousePos.y);
+            if (windowPosition.Contains(mousePos))
+                EditorLogic.fetch.Lock(true, true, true, "library");
+            else
+                EditorLogic.fetch.Unlock("library");
+        }
+    }
+
+    public static void Hide()
+    {
+        drawWindow = false;
+        KSPScienceSettings.Hide();
+        if (HighLogic.LoadedScene == GameScenes.EDITOR)
+            EditorLogic.fetch.Unlock("library");
+    }
+
+    public static void Show()
+    {
+        drawWindow = true;
     }
 
     private void OnDraw()
@@ -278,11 +300,9 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.EndArea();
 
         if (GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
-        {
-            KSPScienceSettings.toggle();
-        }
+            KSPScienceSettings.Toggle();
         if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
-            drawWindow = false;
+            Hide();
         if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));

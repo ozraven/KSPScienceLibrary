@@ -16,12 +16,15 @@ public class KSPScienceButton : MonoBehaviour
         toolbarKSPScienceButton.Visible = true;
         toolbarKSPScienceButton.OnClick += button1_OnClick;
         KSPScienceLibrary.toolbarButton = this;
-        toolbarKSPScienceButton.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER, GameScenes.FLIGHT);
+        toolbarKSPScienceButton.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER, GameScenes.FLIGHT, GameScenes.EDITOR);
     }
 
     private void button1_OnClick(ClickEvent e)
     {
-        KSPScienceLibrary.drawWindow = !KSPScienceLibrary.drawWindow;
+        if (KSPScienceLibrary.drawWindow)
+            KSPScienceLibrary.Hide();
+        else
+            KSPScienceLibrary.Show();
     }
 
     public void UpdateIcon(bool drawWindow)
@@ -31,7 +34,7 @@ public class KSPScienceButton : MonoBehaviour
 
     internal void OnDestroy()
     {
-        print("Destroy Science Window Button");
+        //print("Destroy Science Window Button");
         KSPScienceLibrary.toolbarButton = null;
         toolbarKSPScienceButton.Destroy();
     }

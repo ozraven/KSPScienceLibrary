@@ -19,7 +19,7 @@ internal class KSPScienceSettings
 
     private KSPScienceSettings()
     {
-        MonoBehaviour.print("Create Science Settings");
+        //MonoBehaviour.print("Create Science Settings");
         windowStyle = new GUIStyle(HighLogic.Skin.window);
         windowStyle.stretchHeight = true;
         windowStyle.stretchWidth = true;
@@ -49,13 +49,13 @@ internal class KSPScienceSettings
     {
 //         if (null == settings)
 //             settings = new KSPScienceSettings();
-        MonoBehaviour.print("getRectSetting " + settingID + " " + settings.settingsRects[settingID]);
+        //MonoBehaviour.print("getRectSetting " + settingID + " " + settings.settingsRects[settingID]);
         return settings.settingsRects[settingID];
     }
 
     public static void setRectSetting(string settingID, Rect setting)
     {
-        MonoBehaviour.print("setRectSetting " + settingID + " " + setting);
+        //MonoBehaviour.print("setRectSetting " + settingID + " " + setting);
 //         if (null == settings)
 //             settings = new KSPScienceSettings();
         settings._setRectSetting(settingID, setting);
@@ -63,7 +63,7 @@ internal class KSPScienceSettings
 
     private void _setRectSetting(string settingID, Rect setting)
     {
-        MonoBehaviour.print("_setRectSetting " + settingID + " " + setting);
+        //MonoBehaviour.print("_setRectSetting " + settingID + " " + setting);
 
         if (settingsRects.ContainsKey(settingID))
             settingsRects[settingID] = setting;
@@ -73,8 +73,8 @@ internal class KSPScienceSettings
 
     private void SaveSettings()
     {
-        MonoBehaviour.print("Saving Science Library settings...");
-        MonoBehaviour.print("styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
+        //MonoBehaviour.print("Saving Science Library settings...");
+        //MonoBehaviour.print("styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
 
         cn.ClearData();
 
@@ -117,6 +117,8 @@ internal class KSPScienceSettings
         settingsStyles.Add("MonitorOnShipExperiments", style);
 
         settingsBools.Add("ShowDeployButton", false);
+        settingsBools.Add("ShowOnlyKnownBiomes", false);
+        settingsBools.Add("ShowOnlyKnownExperiments", false);
 
 
         cn = ConfigNode.Load(filename) ?? new ConfigNode();
@@ -127,13 +129,15 @@ internal class KSPScienceSettings
         ReadTextColorFromConfig("MonitorNewExperiments", settingsStyles["MonitorNewExperiments"]);
         ReadTextColorFromConfig("MonitorOnShipExperiments", settingsStyles["MonitorOnShipExperiments"]);
 
-        settingsBools["ShowDeployButton"] = ReadBoolFromConfig("ShowDeployButton", false);
+        settingsBools["ShowDeployButton"] = ReadBoolFromConfig("ShowDeployButton", settingsBools["ShowDeployButton"]);
+        settingsBools["ShowOnlyKnownBiomes"] = ReadBoolFromConfig("ShowOnlyKnownBiomes", settingsBools["ShowOnlyKnownBiomes"]);
+        settingsBools["ShowOnlyKnownExperiments"] = ReadBoolFromConfig("ShowOnlyKnownExperiments", settingsBools["ShowOnlyKnownExperiments"]);
 
         _setRectSetting("LibraryRect", ReadRectFromConfig("LibraryRect", new Rect(5, 20, Screen.width - 10, Screen.height - 80)));
         _setRectSetting("MonitorRect", ReadRectFromConfig("MonitorRect", new Rect((Screen.width - 600)/2, (Screen.height - 200)/2, 600, 200)));
         _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 200)/2, 400, 200)));
 
-        MonoBehaviour.print("after load settings. styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
+        //MonoBehaviour.print("after load settings. styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
     }
 
     private bool ReadTextColorFromConfig(string id, GUIStyle style)
@@ -156,7 +160,7 @@ internal class KSPScienceSettings
         return bool.Parse(cn.GetValue(id));
     }
 
-    public static void show()
+    public static void Show()
     {
 //         if (null == settings)
 //             settings = new KSPScienceSettings();
@@ -165,7 +169,7 @@ internal class KSPScienceSettings
         RenderingManager.AddToPostDrawQueue(3, settings.OnDraw);
     }
 
-    public static void hide()
+    public static void Hide()
     {
 //         if (null == settings)
 //             settings = new KSPScienceSettings();
@@ -174,13 +178,13 @@ internal class KSPScienceSettings
         RenderingManager.RemoveFromPostDrawQueue(3, settings.OnDraw);
     }
 
-    public static void toggle()
+    public static void Toggle()
     {
         //if (null == settings || !settings.shown)
         if (!settings.shown)
-            show();
+            Show();
         else
-            hide();
+            Hide();
     }
 
     ~KSPScienceSettings()
@@ -190,7 +194,7 @@ internal class KSPScienceSettings
 
     public void OnDestroy()
     {
-        MonoBehaviour.print("Destroy Science Settings");
+        //MonoBehaviour.print("Destroy Science Settings");
         SaveSettings();
 
         RenderingManager.RemoveFromPostDrawQueue(3, OnDraw);
@@ -198,7 +202,7 @@ internal class KSPScienceSettings
 
     private void OnDraw()
     {
-        MonoBehaviour.print("Settings_OnDraw");
+        //MonoBehaviour.print("Settings_OnDraw");
         if (!settings.shown) return;
         windowPosition = GUI.Window(5, windowPosition, OnWindow, "Science Settings", windowStyle);
         setRectSetting("SettingsRect", windowPosition);
@@ -207,25 +211,28 @@ internal class KSPScienceSettings
     private void OnWindow(int id)
     {
         //cn.ClearData();
-        MonoBehaviour.print("Settings_OnWindow");
+        //MonoBehaviour.print("Settings_OnWindow");
         GUILayout.BeginVertical();
-        AddHorizontalColorSlider("LibraryDoneExperiments", "Library Done Experiments:");
-        AddHorizontalColorSlider("LibraryNewExperiments", "Library New Experiments:");
+        GUILayout.Label("Monitor:");
         AddHorizontalColorSlider("MonitorKSCExperiments", "Monitor KSC Experiments:");
         AddHorizontalColorSlider("MonitorNewExperiments", "Monitor New Experiments:");
         AddHorizontalColorSlider("MonitorOnShipExperiments", "Monitor OnShip Experiments:");
-
-        //AddToggle("ShowDeployButton", "Show \"Deploy\" Button:");
+        AddToggle("ShowDeployButton", "Show \"Deploy\" Button:");
+        GUILayout.Label("Library:");
+        AddHorizontalColorSlider("LibraryDoneExperiments", "Library Done Experiments:");
+        AddHorizontalColorSlider("LibraryNewExperiments", "Library New Experiments:");
+        AddToggle("ShowOnlyKnownBiomes", "Show only known biomes:");
+        AddToggle("ShowOnlyKnownExperiments", "Show only known experimentts:");
 /*
         if (GUILayout.Button("Save to File"))
-            cn.Save(filename);
+            settings.SaveSettings();
         if (GUILayout.Button("Reload from File"))
             LoadSettings();
 */
         GUILayout.EndVertical();
 
         if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
-            hide();
+            Hide();
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
     }
 

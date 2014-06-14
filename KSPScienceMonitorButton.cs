@@ -21,7 +21,10 @@ public class KSPScienceMonitorButton : MonoBehaviour
 
     private void KSPScienceMonitorButton_OnClick(ClickEvent e)
     {
-        KSPScienceMonitor.drawWindow = !KSPScienceMonitor.drawWindow;
+        if (KSPScienceMonitor.drawWindow)
+            KSPScienceMonitor.Hide();
+        else
+            KSPScienceMonitor.Show();
     }
 
     public void UpdateIcon(bool drawWindow)
@@ -31,7 +34,7 @@ public class KSPScienceMonitorButton : MonoBehaviour
 
     internal void OnDestroy()
     {
-        print("Destroy Science Monitor Button");
+        //print("Destroy Science Monitor Button");
         KSPScienceMonitor.toolbarButton = null;
         toolbarKSPScienceMonitorButton.Destroy();
     }
