@@ -31,6 +31,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public void Awake()
     {
+        lastdrawWindow = false;
         RenderingManager.AddToPostDrawQueue(1, OnDraw);
     }
 
@@ -124,7 +125,7 @@ public class KSPScienceLibrary : MonoBehaviour
         {
             pressedFilterId = pressedCounter;
             selectedBody = "All";
-            selectedExperiments = dataOutputList;
+            selectedExperiments = GetSelectedExperimentsByTypes(allExperimentTypes, dataOutputList);
             selectedExperiments2 = selectedExperiments;
             pressedPlanet = -1;
         }
@@ -379,7 +380,11 @@ public class KSPScienceLibrary : MonoBehaviour
             dataOutputList.Add(ex);
         }
         dataOutputList.Sort(SortByName);
-        allExperimentTypes = GetAllDiscoveredExperimentTypes();
+
+        if (KSPScienceSettings.getBoolSetting("ShowOnlyKnownExperiments"))
+            allExperimentTypes = GetKnownExperimentTypes();
+        else
+            allExperimentTypes = GetAllExperimentTypes();
     }
 
     public List<Experiment> GetSelectedExperiments(string body, List<Experiment> input = null)
@@ -410,7 +415,34 @@ public class KSPScienceLibrary : MonoBehaviour
         return selectedExperimentsTemp;
     }
 
-    public List<string> GetAllDiscoveredExperimentTypes()
+    public List<Experiment> GetSelectedExperimentsByTypes(List<string> types, List<Experiment> input = null)
+    {
+        if (input == null)
+            input = dataOutputList;
+        List<Experiment> selectedExperimentsTemp = new List<Experiment>();
+        foreach (Experiment experiment in input)
+        {
+            if (types.Contains(experiment.FirstIdType))
+                selectedExperimentsTemp.Add(experiment);
+        }
+        return selectedExperimentsTemp;
+    }
+
+    public List<string> GetKnownExperimentTypes()
+    {
+        List<string> known = new List<string>();
+        List<ScienceSubject> subjects = ResearchAndDevelopment.GetSubjects();
+        foreach (ScienceSubject subject in subjects)
+        {
+            string tmpid = subject.id.Split('@')[0];
+            if (!known.Contains(tmpid))
+                known.Add(tmpid);
+        }
+        known.Sort();
+        return known;
+    }
+
+    public List<string> GetAllExperimentTypes()
     {
         List<string> selectedExperimentTypesTemp = new List<string>();
         foreach (Experiment experiment in dataOutputList)

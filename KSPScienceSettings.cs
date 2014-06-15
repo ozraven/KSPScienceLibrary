@@ -135,7 +135,7 @@ internal class KSPScienceSettings
 
         _setRectSetting("LibraryRect", ReadRectFromConfig("LibraryRect", new Rect(5, 20, Screen.width - 10, Screen.height - 80)));
         _setRectSetting("MonitorRect", ReadRectFromConfig("MonitorRect", new Rect((Screen.width - 600)/2, (Screen.height - 200)/2, 600, 200)));
-        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 200)/2, 400, 200)));
+        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 400)/2, 400, 400)));
 
         //MonoBehaviour.print("after load settings. styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
     }
