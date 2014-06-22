@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -317,7 +318,9 @@ public class KSPScienceLibrary : MonoBehaviour
         dataOutputList = new List<Experiment>();
         List<ScienceSubject> newExperiments = new List<ScienceSubject>();
         List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
+        List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
 
+        //I am glad this code runs only once! Too expensive!
         foreach (string id in exIds)
         {
             foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
@@ -338,6 +341,11 @@ public class KSPScienceLibrary : MonoBehaviour
                         {
                             foreach (string biome in ResearchAndDevelopment.GetBiomeTags(body))
                             {
+                                if (KSPScienceSettings.getBoolSetting("ShowOnlyKnownBiomes"))
+                                {
+                                    bool foundBiome = subjectslist.Any(subject => subject.id.Contains("@" + body.name) && subject.id.Contains(biome.Replace(" ", "")));
+                                    if (!foundBiome) continue;
+                                }
                                 ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, biome);
                                 if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
                                 newExperiments.Add(ssj);
@@ -359,7 +367,7 @@ public class KSPScienceLibrary : MonoBehaviour
             }
         }
 
-        List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
+        
         foreach (ScienceSubject scienceSubject in subjectslist)
         {
             newExperiments.RemoveAll(subject => subject.id == scienceSubject.id);

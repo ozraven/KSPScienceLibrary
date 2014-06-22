@@ -86,7 +86,7 @@ internal class KSPScienceSettings
 
         foreach (KeyValuePair<string, Rect> settingsRect in settingsRects)
         {
-            Vector4 tmpVector4 = new Vector4(settingsRect.Value.yMin, settingsRect.Value.width, settingsRect.Value.height, settingsRect.Value.xMin);
+            Vector4 tmpVector4 = new Vector4(settingsRect.Value.xMin, settingsRect.Value.yMin, settingsRect.Value.width, settingsRect.Value.height);
             cn.AddValue(settingsRect.Key, ConfigNode.WriteVector(tmpVector4));
         }
         cn.Save(filename);
@@ -135,7 +135,7 @@ internal class KSPScienceSettings
 
         _setRectSetting("LibraryRect", ReadRectFromConfig("LibraryRect", new Rect(5, 20, Screen.width - 10, Screen.height - 80)));
         _setRectSetting("MonitorRect", ReadRectFromConfig("MonitorRect", new Rect((Screen.width - 600)/2, (Screen.height - 200)/2, 600, 200)));
-        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 400)/2, 400, 400)));
+        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 400)/2, 400, 320)));
 
         //MonoBehaviour.print("after load settings. styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
     }
@@ -151,7 +151,7 @@ internal class KSPScienceSettings
     {
         if (!cn.HasValue(id)) return default_value;
         Vector4 tmpVector4 = ConfigNode.ParseVector4(cn.GetValue(id));
-        return new Rect(tmpVector4.w, tmpVector4.x, tmpVector4.y, tmpVector4.z);
+        return new Rect(tmpVector4.x, tmpVector4.y, tmpVector4.z, tmpVector4.w);
     }
 
     private bool ReadBoolFromConfig(string id, bool default_value)
