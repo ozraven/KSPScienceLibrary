@@ -195,6 +195,7 @@ public class KSPScienceMonitor : MonoBehaviour
 
     private void OnWindow(int windowID)
     {
+        GUI.skin = KSPScienceSettings.getSkin();
         //         GUILayout.BeginHorizontal();
         //         autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
         //         GUILayout.EndHorizontal();

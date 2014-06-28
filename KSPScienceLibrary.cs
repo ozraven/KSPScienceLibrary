@@ -113,6 +113,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     private void OnWindow(int windowID)
     {
+        GUI.skin = KSPScienceSettings.getSkin();
         GUILayout.BeginArea(new Rect(10, 10, windowPosition.width - 10, windowPosition.height - 10));
         GUILayout.BeginHorizontal();
         GUILayout.BeginVertical(GUILayout.MaxWidth(240));

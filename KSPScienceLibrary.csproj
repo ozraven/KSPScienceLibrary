@@ -48,6 +48,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ComboBox.cs" />
     <Compile Include="Experiment.cs" />
     <Compile Include="ExperimentView.cs" />
     <Compile Include="KSPScienceButton.cs" />
