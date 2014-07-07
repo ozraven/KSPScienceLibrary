@@ -56,8 +56,10 @@
     <Compile Include="KSPScienceMonitor.cs" />
     <Compile Include="KSPScienceMonitorButton.cs" />
     <Compile Include="KSPScienceSettings.cs" />
+    <Compile Include="LibraryExperiment.cs" />
     <Compile Include="LibraryUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TextReplacer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="img1l.png">
@@ -73,6 +75,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="LICENSE.md">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="TextReplacer.cfg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

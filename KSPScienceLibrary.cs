@@ -122,7 +122,7 @@ public class KSPScienceLibrary : MonoBehaviour
         int pressedCounter = 0;
         bool pressedlast = (pressedCounter == pressedFilterId);
         bool pressed;
-        pressed = GUILayout.Toggle(pressedlast, "All Experiments", "Button");
+        pressed = GUILayout.Toggle(pressedlast, TextReplacer.GetReplaceForString("All Experiments"), "Button");
         if (pressed && !pressedlast)
         {
             pressedFilterId = pressedCounter;
@@ -136,7 +136,7 @@ public class KSPScienceLibrary : MonoBehaviour
         {
             pressedCounter++;
             pressedlast = (pressedCounter == pressedFilterId);
-            pressed = GUILayout.Toggle(pressedlast, experimentType, "Button");
+            pressed = GUILayout.Toggle(pressedlast, TextReplacer.GetReplaceForString(experimentType), "Button");
             if (pressed && !pressedlast)
             {
                 pressedFilterId = pressedCounter;
@@ -191,11 +191,11 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.EndVertical();
         GUILayout.BeginVertical();
         GUILayout.BeginHorizontal();
-        GUILayout.Label(selectedBody + " Experiments List");
+        GUILayout.Label(selectedBody + " " + TextReplacer.GetReplaceForString("Experiments List"));
         GUILayout.EndHorizontal();
         GUILayout.BeginHorizontal();
 
-        if (GUILayout.Button("Sort by Name"))
+        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Name")))
         {
             if (lastsorted == 1)
             {
@@ -207,7 +207,7 @@ public class KSPScienceLibrary : MonoBehaviour
                 lastsorted = 1;
             }
         }
-        if (GUILayout.Button("Sort by Earned"))
+        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Earned")))
         {
             if (lastsorted == 2)
             {
@@ -219,7 +219,7 @@ public class KSPScienceLibrary : MonoBehaviour
                 lastsorted = 2;
             }
         }
-        if (GUILayout.Button("Sort by Remaining"))
+        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Remaining")))
         {
             if (lastsorted == 3)
             {
@@ -231,7 +231,7 @@ public class KSPScienceLibrary : MonoBehaviour
                 lastsorted = 3;
             }
         }
-        if (GUILayout.Button("Sort by Type"))
+        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Type")))
         {
             if (lastsorted == 4)
             {
@@ -249,7 +249,7 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.BeginHorizontal();
         GUILayout.Space(20);
         GUILayout.BeginVertical();
-        GUILayout.Label("TYPE");
+        GUILayout.Label(TextReplacer.GetReplaceForString("TYPE"));
         GUIStyle styleNew = KSPScienceSettings.getStyleSetting("LibraryNewExperiments");
         GUIStyle styleDone = KSPScienceSettings.getStyleSetting("LibraryDoneExperiments");
 
@@ -262,7 +262,7 @@ public class KSPScienceLibrary : MonoBehaviour
         }
         GUILayout.EndVertical();
         GUILayout.BeginVertical();
-        GUILayout.Label("EARNED");
+        GUILayout.Label(TextReplacer.GetReplaceForString("EARNED"));
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
@@ -272,7 +272,7 @@ public class KSPScienceLibrary : MonoBehaviour
         }
         GUILayout.EndVertical();
         GUILayout.BeginVertical();
-        GUILayout.Label("REMAINING");
+        GUILayout.Label(TextReplacer.GetReplaceForString("REMAINING"));
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
@@ -283,7 +283,7 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.EndVertical();
         GUILayout.Space(20);
         GUILayout.BeginVertical();
-        GUILayout.Label("Library");
+        GUILayout.Label(TextReplacer.GetReplaceForString("Library"));
         foreach (Experiment experiment in selectedExperiments2)
         {
             if (experiment.earned == 0)
@@ -368,7 +368,7 @@ public class KSPScienceLibrary : MonoBehaviour
             }
         }
 
-        
+
         foreach (ScienceSubject scienceSubject in subjectslist)
         {
             newExperiments.RemoveAll(subject => subject.id == scienceSubject.id);

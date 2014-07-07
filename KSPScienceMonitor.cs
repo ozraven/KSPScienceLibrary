@@ -209,26 +209,26 @@ public class KSPScienceMonitor : MonoBehaviour
             switch (i)
             {
                 case 0:
-                    GUILayout.Label("ID");
+                    GUILayout.Label(TextReplacer.GetReplaceForString("ID"));
                     break;
                 case 1:
-                    GUILayout.Label("Earned");
+                    GUILayout.Label(TextReplacer.GetReplaceForString("Earned"));
                     break;
                 case 2:
-                    GUILayout.Label("Max");
+                    GUILayout.Label(TextReplacer.GetReplaceForString("Max"));
                     break;
                 case 3:
-                    GUILayout.Label("Remains");
+                    GUILayout.Label(TextReplacer.GetReplaceForString("Remains"));
                     break;
                 case 4:
-                    GUILayout.Label("OnShip");
+                    GUILayout.Label(TextReplacer.GetReplaceForString("OnShip"));
                     break;
                 case 5:
-                    GUILayout.Label("NextExp");
+                    GUILayout.Label(TextReplacer.GetReplaceForString("NextExp"));
                     break;
                 case 6:
                     if (KSPScienceSettings.getBoolSetting("ShowDeployButton"))
-                        GUILayout.Label("Deploy");
+                        GUILayout.Label(TextReplacer.GetReplaceForString("Deploy"));
                     break;
             }
             foreach (ExperimentView experimentView in Output)
@@ -320,7 +320,7 @@ public class KSPScienceMonitor : MonoBehaviour
                                 }
                                 if (foundFreeSpaceForExperiment)
                                 {
-                                    if (GUILayout.Button("deploy", buttonStyle, GUILayout.Height(15)))
+                                    if (GUILayout.Button(TextReplacer.GetReplaceForString("deploy"), buttonStyle, GUILayout.Height(15)))
                                         moduleScienceExperiment.DeployExperiment();
                                 } else
                                     GUILayout.Button("------", buttonStyle, GUILayout.Height(15));

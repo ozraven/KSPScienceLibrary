@@ -142,18 +142,23 @@ internal class KSPScienceSettings
 
         style = new GUIStyle();
         style.normal.textColor = Color.white;
+        style.wordWrap = false;
         settingsStyles.Add("LibraryDoneExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.red;
+        style.wordWrap = false;
         settingsStyles.Add("LibraryNewExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.red;
+        style.wordWrap = false;
         settingsStyles.Add("MonitorKSCExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.green;
+        style.wordWrap = false;
         settingsStyles.Add("MonitorNewExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.yellow;
+        style.wordWrap = false;
         settingsStyles.Add("MonitorOnShipExperiments", style);
 
         settingsBools.Add("ShowDeployButton", false);
@@ -178,7 +183,7 @@ internal class KSPScienceSettings
 
         _setRectSetting("LibraryRect", ReadRectFromConfig("LibraryRect", new Rect(5, 20, Screen.width - 10, Screen.height - 80)));
         _setRectSetting("MonitorRect", ReadRectFromConfig("MonitorRect", new Rect((Screen.width - 600)/2, (Screen.height - 200)/2, 600, 200)));
-        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 400)/2, 400, 420)));
+        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 440)/2, 400, 440)));
 
         //MonoBehaviour.print("after load settings. styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
     }
@@ -253,27 +258,27 @@ internal class KSPScienceSettings
     {
         //MonoBehaviour.print("Settings_OnDraw");
         if (!settings.shown) return;
-        windowPosition = GUI.Window(5, windowPosition, OnWindow, "Science Settings", windowStyle);
+        windowPosition = GUI.Window(5, windowPosition, OnWindow, TextReplacer.GetReplaceForString("Science Settings"), windowStyle);
         setRectSetting("SettingsRect", windowPosition);
     }
 
     private void OnWindow(int id)
     {
-        //GUI.skin = getSkin();
+        GUI.skin = AssetBase.GetGUISkin("KSP window 1");
         //cn.ClearData();
         //MonoBehaviour.print("Settings_OnWindow");
         GUILayout.BeginVertical();
-        GUILayout.Label("Monitor:");
-        AddHorizontalColorSlider("MonitorKSCExperiments", "Monitor KSC Experiments:");
-        AddHorizontalColorSlider("MonitorNewExperiments", "Monitor New Experiments:");
-        AddHorizontalColorSlider("MonitorOnShipExperiments", "Monitor OnShip Experiments:");
-        AddToggle("ShowDeployButton", "Show \"Deploy\" Button:");
-        GUILayout.Label("Library:");
-        AddHorizontalColorSlider("LibraryDoneExperiments", "Library Done Experiments:");
-        AddHorizontalColorSlider("LibraryNewExperiments", "Library New Experiments:");
-        AddToggle("ShowOnlyKnownBiomes", "Show only known biomes:");
-        AddToggle("ShowOnlyKnownExperiments", "Show only known experimentts:");
-        GUILayout.Label("Skin:");
+        GUILayout.Label(TextReplacer.GetReplaceForString("Monitor:"));
+        AddHorizontalColorSlider("MonitorKSCExperiments", TextReplacer.GetReplaceForString("Monitor KSC Experiments:"));
+        AddHorizontalColorSlider("MonitorNewExperiments", TextReplacer.GetReplaceForString("Monitor New Experiments:"));
+        AddHorizontalColorSlider("MonitorOnShipExperiments", TextReplacer.GetReplaceForString("Monitor OnShip Experiments:"));
+        AddToggle("ShowDeployButton", TextReplacer.GetReplaceForString("Show \"Deploy\" Button:"));
+        GUILayout.Label(TextReplacer.GetReplaceForString("Library:"));
+        AddHorizontalColorSlider("LibraryDoneExperiments", TextReplacer.GetReplaceForString("Library Done Experiments:"));
+        AddHorizontalColorSlider("LibraryNewExperiments", TextReplacer.GetReplaceForString("Library New Experiments:"));
+        AddToggle("ShowOnlyKnownBiomes", TextReplacer.GetReplaceForString("Show only known biomes:"));
+        AddToggle("ShowOnlyKnownExperiments", TextReplacer.GetReplaceForString("Show only known experimentts:"));
+        GUILayout.Label(TextReplacer.GetReplaceForString("Skin:"));
 
         int selectedItemIndex = comboBoxControl.GetSelectedItemIndex();
         selectedItemIndex = comboBoxControl.List(comboBoxList[selectedItemIndex].text, comboBoxList, listStyle, settings.settingsIntegers["Skin"]);
@@ -320,7 +325,7 @@ internal class KSPScienceSettings
         g = GUILayout.HorizontalSlider(g, 0, 255);
         b = GUILayout.HorizontalSlider(b, 0, 255);
         style.normal.textColor = new Color(r/255, g/255, b/255);
-        GUILayout.Box("text", style);
+        GUILayout.Box(TextReplacer.GetReplaceForString("text"), style);
         GUILayout.EndHorizontal();
 
         //cn.SetValue(id, ConfigNode.WriteColor(style.normal.textColor));
