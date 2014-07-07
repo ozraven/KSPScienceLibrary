@@ -5,9 +5,20 @@
 +hide biomes, that did not discovered (at least one experiment done on such biome) /toggle
 +hide experiments the same way /toggle
 +add switchable skins
+
+skins: e.g. Unity, Gameskin, KSP window #, default, etc..
 replace experiment names
 add replacement for new experiments names
+hide onship science data /toggle on monitor window
+hide 0% remaining /toggle on monitor window
+fix bugs on monitor window: red+yellow SurfaceSample experiment
 add some sortable or able to hide some info in Science Monitor
+add blacklist for some experiments
+add some window to show spreadsheet with planets, experiments, parts for this experiments, possible situations and biomes,
+add some filter to apply for all of this.
+
+
+
 
 
 
