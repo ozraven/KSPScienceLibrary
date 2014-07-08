@@ -10,29 +10,51 @@ public class KSPScienceLibrary : MonoBehaviour
     public static KSPScienceButton toolbarButton;
     private static Rect windowPosition;
     private static GUIStyle windowStyle;
-    public static bool drawWindow = false;
+    private static bool drawWindow;
+    private static KSPScienceLibrary instance;
+
     private static string version = "";
-    private List<string> allExperimentTypes = new List<string>();
-    //private bool autoDeploy = false;
-    //private CelestialBody[] bodies = null;
-    //private Dictionary<string, CelestialBody> bodiesNames = null;
-    private List<Experiment> dataOutputList;
+    private readonly List<string> pressedBiomes = new List<string>();
+    private readonly List<CelestialBody> pressedCelestialBodies = new List<CelestialBody>();
+    private readonly List<ScienceExperiment> pressedScienceExperiments = new List<ScienceExperiment>();
+    private List<string> biomesList;
+    private CelestialBody[] bodies;
+    private List<LibraryExperiment> filtered;
     private bool lastdrawWindow;
-
-    private int lastsorted;
-    private int pressedFilterId = -1;
-    private int pressedPlanet = -1;
+    //private List<LibraryExperiment> libraryExperiments = new List<LibraryExperiment>();
     private bool resizingWindow;
+    private Vector2 scrollBiomes;
+    private Vector2 scrollContentPage;
 
-    private Vector2 scrollPlanet = Vector2.zero;
-    private Vector2 scrollPosition = Vector2.zero;
-    private string selectedBody;
-    private List<Experiment> selectedExperiments = new List<Experiment>();
-    private List<Experiment> selectedExperiments2 = new List<Experiment>();
+    private Vector2 scrollExperiments;
+    private Vector2 scrollPlanets;
+
+    private LibraryView libraryView = new LibraryView();
+    private CelestialBody sun;
+
+    public static bool DrawWindow
+    {
+        get { return drawWindow; }
+    }
 
     public void Awake()
     {
+        instance = this;
         lastdrawWindow = false;
+
+        sun = FlightGlobals.Bodies[0];
+        bodies = FlightGlobals.Bodies.ToArray();
+        Array.Sort(bodies, delegate(CelestialBody body1, CelestialBody body2)
+        {
+            if (body2.referenceBody == body1 && body1 != sun)
+                return -1;
+            if (body1.referenceBody == body2 && body2 != sun)
+                return 1;
+            if (body1.referenceBody == body2.referenceBody && body2.referenceBody != sun)
+                return 0;
+            return (sun.transform.position - body1.transform.position).magnitude.CompareTo((sun.transform.position - body2.transform.position).magnitude);
+        });
+
         RenderingManager.AddToPostDrawQueue(1, OnDraw);
     }
 
@@ -43,8 +65,6 @@ public class KSPScienceLibrary : MonoBehaviour
         windowStyle.stretchWidth = true;
 
         drawWindow = false;
-        selectedBody = "All";
-        selectedExperiments = dataOutputList;
 
         System.Version ver = Assembly.GetAssembly(typeof (KSPScienceLibrary)).GetName().Version;
         version = "Version " + ver.Major + "." + ver.Minor + "   Build " + ver.Build + "." + ver.Revision;
@@ -54,7 +74,6 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public void OnDestroy()
     {
-        //print("Destroy Science Window");
         RenderingManager.RemoveFromPostDrawQueue(1, OnDraw);
     }
 
@@ -88,6 +107,7 @@ public class KSPScienceLibrary : MonoBehaviour
 
     public static void Show()
     {
+        LibraryUtils.GetAllPossibleLibraryExperiments();
         drawWindow = true;
     }
 
@@ -98,7 +118,6 @@ public class KSPScienceLibrary : MonoBehaviour
 
         if (!lastdrawWindow && drawWindow)
         {
-            GetSciData();
         }
 
         if (drawWindow)
@@ -107,201 +126,191 @@ public class KSPScienceLibrary : MonoBehaviour
             KSPScienceSettings.setRectSetting("LibraryRect", windowPosition);
         }
 
-
         lastdrawWindow = drawWindow;
     }
 
     private void OnWindow(int windowID)
     {
         GUI.skin = KSPScienceSettings.getSkin();
-        GUILayout.BeginArea(new Rect(10, 10, windowPosition.width - 10, windowPosition.height - 10));
+        bool filterChanged = false;
+        GUILayout.BeginArea(new Rect(1, 21, windowPosition.width - 22, windowPosition.height - 42));
+
         GUILayout.BeginHorizontal();
-        GUILayout.BeginVertical(GUILayout.MaxWidth(240));
-        GUILayout.Label("Experiment Filters");
-        scrollPlanet = GUILayout.BeginScrollView(scrollPlanet);
-        int pressedCounter = 0;
-        bool pressedlast = (pressedCounter == pressedFilterId);
-        bool pressed;
-        pressed = GUILayout.Toggle(pressedlast, TextReplacer.GetReplaceForString("All Experiments"), "Button");
-        if (pressed && !pressedlast)
+        // start planets
+        GUILayout.BeginVertical(GUILayout.MaxWidth(105), GUILayout.MinWidth(105));
+        scrollPlanets = GUILayout.BeginScrollView(scrollPlanets);
+
+
+        if (GUILayout.Toggle(pressedCelestialBodies.Count == 0, TextReplacer.GetReplaceForString("All Planets"), "Button") && pressedCelestialBodies.Count != 0)
         {
-            pressedFilterId = pressedCounter;
-            selectedBody = "All";
-            selectedExperiments = GetSelectedExperimentsByTypes(allExperimentTypes, dataOutputList);
-            selectedExperiments2 = selectedExperiments;
-            pressedPlanet = -1;
+            pressedCelestialBodies.Clear();
+            filterChanged = true;
         }
-
-        foreach (string experimentType in allExperimentTypes)
-        {
-            pressedCounter++;
-            pressedlast = (pressedCounter == pressedFilterId);
-            pressed = GUILayout.Toggle(pressedlast, TextReplacer.GetReplaceForString(experimentType), "Button");
-            if (pressed && !pressedlast)
-            {
-                pressedFilterId = pressedCounter;
-                selectedBody = experimentType;
-                selectedExperiments = GetSelectedExperimentsByType(experimentType);
-                selectedExperiments2 = selectedExperiments;
-                pressedPlanet = -1;
-            }
-        }
-        CelestialBody sun = FlightGlobals.Bodies[0];
-
-
-        CelestialBody[] bodies = FlightGlobals.Bodies.ToArray();
-        Array.Sort(bodies, delegate(CelestialBody body1, CelestialBody body2)
-        {
-            if (body2.referenceBody == body1 && body1 != sun)
-                return -1;
-            if (body1.referenceBody == body2 && body2 != sun)
-                return 1;
-            if (body1.referenceBody == body2.referenceBody && body2.referenceBody != sun)
-                return 0;
-            return (sun.transform.position - body1.transform.position).magnitude.CompareTo((sun.transform.position - body2.transform.position).magnitude);
-        });
-        pressedCounter = 0;
-
         GUILayout.Space(20);
         foreach (CelestialBody body in bodies)
         {
-            bool pressedlastPlanet = (pressedCounter == pressedPlanet);
             bool pressedP;
+            bool pressedPLast = pressedCelestialBodies.Contains(body);
             if (body.referenceBody != sun)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Space(60);
+                GUILayout.Space(20);
             }
-            pressedP = GUILayout.Toggle(pressedlastPlanet, body.name, "Button");
-            if (pressedP && !pressedlastPlanet)
+            pressedP = GUILayout.Toggle(pressedPLast, body.name, "Button");
+            if (pressedP && !pressedPLast)
             {
-                selectedBody = body.name;
-                selectedExperiments2 = GetSelectedExperiments(selectedBody, selectedExperiments);
-                pressedPlanet = pressedCounter;
+                pressedCelestialBodies.Add(body);
+                filterChanged = true;
+            }
+            if (!pressedP && pressedPLast)
+            {
+                pressedCelestialBodies.Remove(body);
+                filterChanged = true;
             }
             if (body.referenceBody != sun)
-            {
                 GUILayout.EndHorizontal();
-            }
-
-
-            pressedCounter++;
         }
         GUILayout.EndScrollView();
         GUILayout.EndVertical();
-        GUILayout.BeginVertical();
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(selectedBody + " " + TextReplacer.GetReplaceForString("Experiments List"));
-        GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
+        // end planets
 
-        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Name")))
-        {
-            if (lastsorted == 1)
-            {
-                selectedExperiments2.Sort(SortByNameD);
-                lastsorted = 5;
-            } else
-            {
-                selectedExperiments2.Sort(SortByName);
-                lastsorted = 1;
-            }
-        }
-        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Earned")))
-        {
-            if (lastsorted == 2)
-            {
-                selectedExperiments2.Sort(SortByEarnedD);
-                lastsorted = 6;
-            } else
-            {
-                selectedExperiments2.Sort(SortByEarned);
-                lastsorted = 2;
-            }
-        }
-        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Remaining")))
-        {
-            if (lastsorted == 3)
-            {
-                selectedExperiments2.Sort(SortByRemainD);
-                lastsorted = 7;
-            } else
-            {
-                selectedExperiments2.Sort(SortByRemain);
-                lastsorted = 3;
-            }
-        }
-        if (GUILayout.Button(TextReplacer.GetReplaceForString("Sort by Type")))
-        {
-            if (lastsorted == 4)
-            {
-                selectedExperiments2.Sort(SortByTypeD);
-                lastsorted = 8;
-            } else
-            {
-                selectedExperiments2.Sort(SortByType);
-                lastsorted = 4;
-            }
-        }
+        // start experiments
+        GUILayout.BeginVertical(GUILayout.MaxWidth(145), GUILayout.MinWidth(145));
+        scrollExperiments = GUILayout.BeginScrollView(scrollExperiments);
 
-        GUILayout.EndHorizontal();
-        scrollPosition = GUILayout.BeginScrollView(scrollPosition);
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(20);
-        GUILayout.BeginVertical();
-        GUILayout.Label(TextReplacer.GetReplaceForString("TYPE"));
-        GUIStyle styleNew = KSPScienceSettings.getStyleSetting("LibraryNewExperiments");
-        GUIStyle styleDone = KSPScienceSettings.getStyleSetting("LibraryDoneExperiments");
-
-        foreach (Experiment experiment in selectedExperiments2)
+        if (GUILayout.Toggle(pressedScienceExperiments.Count == 0, TextReplacer.GetReplaceForString("All Experiments"), "Button") && pressedScienceExperiments.Count != 0)
         {
-            if (experiment.earned == 0)
-                GUILayout.Label(experiment.FirstIdType, styleNew);
-            else
-                GUILayout.Label(experiment.FirstIdType, styleDone);
+            pressedScienceExperiments.Clear();
+            filterChanged = true;
         }
-        GUILayout.EndVertical();
-        GUILayout.BeginVertical();
-        GUILayout.Label(TextReplacer.GetReplaceForString("EARNED"));
-        foreach (Experiment experiment in selectedExperiments2)
-        {
-            if (experiment.earned == 0)
-                GUILayout.Label(experiment.earned.ToString(), styleNew);
-            else
-                GUILayout.Label(experiment.earned.ToString(), styleDone);
-        }
-        GUILayout.EndVertical();
-        GUILayout.BeginVertical();
-        GUILayout.Label(TextReplacer.GetReplaceForString("REMAINING"));
-        foreach (Experiment experiment in selectedExperiments2)
-        {
-            if (experiment.earned == 0)
-                GUILayout.Label(experiment.remain.ToString(), styleNew);
-            else
-                GUILayout.Label(experiment.remain.ToString(), styleDone);
-        }
-        GUILayout.EndVertical();
-        GUILayout.Space(20);
-        GUILayout.BeginVertical();
-        GUILayout.Label(TextReplacer.GetReplaceForString("Library"));
-        foreach (Experiment experiment in selectedExperiments2)
-        {
-            if (experiment.earned == 0)
-                GUILayout.Label(experiment.fullName, styleNew);
-            else
-                GUILayout.Label(experiment.fullName, styleDone);
-        }
-        GUILayout.EndVertical();
         GUILayout.Space(20);
 
+        foreach (string eid in ResearchAndDevelopment.GetExperimentIDs())
+        {
+            ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(eid);
+            bool pressedP;
+            bool pressedPLast = pressedScienceExperiments.Contains(experiment);
+
+            pressedP = GUILayout.Toggle(pressedPLast, TextReplacer.GetReplaceForString(experiment.id), "Button");
+            if (pressedP && !pressedPLast)
+            {
+                pressedScienceExperiments.Add(experiment);
+                filterChanged = true;
+            }
+            if (!pressedP && pressedPLast)
+            {
+                pressedScienceExperiments.Remove(experiment);
+                filterChanged = true;
+            }
+        }
+
+
+        GUILayout.EndScrollView();
+        GUILayout.EndVertical();
+        // end experiments
+        GUILayout.BeginVertical(GUILayout.MaxWidth(windowPosition.width - 280), GUILayout.MinWidth(windowPosition.width - 280));
+        // start biomes
+        GUILayout.BeginHorizontal(GUILayout.MaxHeight(45), GUILayout.MinHeight(45));
+        scrollBiomes = GUILayout.BeginScrollView(scrollBiomes);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Toggle(pressedBiomes.Count == 0, TextReplacer.GetReplaceForString("All Biomes"), "Button") && pressedBiomes.Count != 0)
+        {
+            pressedBiomes.Clear();
+            filterChanged = true;
+        }
+
+
+        if (filterChanged || biomesList == null)
+            biomesList = LibraryUtils.GetBiomesForPlanets(pressedCelestialBodies.Count == 0 ? (IEnumerable<CelestialBody>) bodies : pressedCelestialBodies);
+        foreach (string biome in biomesList)
+        {
+            bool pressedP;
+            bool pressedPLast = pressedBiomes.Contains(biome);
+
+            pressedP = GUILayout.Toggle(pressedPLast, biome, "Button");
+            if (pressedP && !pressedPLast)
+            {
+                pressedBiomes.Add(biome);
+                filterChanged = true;
+            }
+            if (!pressedP && pressedPLast)
+            {
+                pressedBiomes.Remove(biome);
+                filterChanged = true;
+            }
+        }
         GUILayout.EndHorizontal();
         GUILayout.EndScrollView();
-        GUILayout.Space(20);
-        GUILayout.EndVertical();
-        GUILayout.Space(20);
         GUILayout.EndHorizontal();
+        // end biomes
+        // start content page
+        GUILayout.BeginHorizontal();
+        GUILayout.BeginVertical();
+        scrollContentPage = GUILayout.BeginScrollView(scrollContentPage);
+        if (filterChanged || filtered == null)
+            filtered = LibraryUtils.FilterLibraryExperiments(LibraryUtils.LibraryExperiments, pressedCelestialBodies, pressedScienceExperiments, pressedBiomes);
+
+        //IEnumerable<CelestialBody> bodies = pressedCelestialBodies.Count == 0 ? (IEnumerable<CelestialBody>) bodies : pressedCelestialBodies;
+        //Get biomes for body
+        //getSituations
+        //Experiments from body, biome, situation????????????
+
+        //or should I use SQL???
+
+        float width = (windowPosition.width - 280)/7;
+        foreach (CelestialBody body in LibraryUtils.DatabaseDictionary.Keys)
+        {
+            if (pressedCelestialBodies.Count == 0 || pressedCelestialBodies.Contains(body))
+            {
+                foreach (string biome in LibraryUtils.DatabaseDictionary[body].Keys)
+                {
+                    if (pressedBiomes.Count == 0 || pressedBiomes.Contains(biome))
+                    {
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label(body.name + " - " + biome, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                        foreach (string situationStr in Enum.GetNames(typeof (ExperimentSituations)))
+                        {
+                            GUILayout.Label(situationStr, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                        }
+                        GUILayout.EndHorizontal();
+
+                        foreach (string firstID in LibraryUtils.DatabaseDictionary[body][biome].Keys)
+                        {
+                            if (pressedScienceExperiments.Count == 0 || pressedScienceExperiments.Any(experiment => experiment.id == firstID))
+                            {
+                                GUILayout.BeginHorizontal();
+                                GUILayout.Label(firstID, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                foreach (ExperimentSituations situation in Enum.GetValues(typeof (ExperimentSituations)))
+                                {
+                                    if (LibraryUtils.DatabaseDictionary[body][biome][firstID].ContainsKey(situation))
+                                    {
+                                        LibraryExperiment lib = LibraryUtils.DatabaseDictionary[body][biome][firstID][situation];
+                                        if (lib != null)
+                                            GUILayout.Label(lib.ScienceCapacity.ToString(), GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                        else
+                                            GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                    } else
+                                    {
+                                        GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                    }
+                                }
+                                GUILayout.EndHorizontal();
+                            }
+                        }
+                        GUILayout.Space(20);
+                    }
+                }
+            }
+        }
+
+        GUILayout.EndScrollView();
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+        // stop content page
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+
         GUILayout.EndArea();
-
         if (GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
             KSPScienceSettings.Toggle();
         if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
@@ -309,209 +318,5 @@ public class KSPScienceLibrary : MonoBehaviour
         if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
             resizingWindow = true;
         GUI.DragWindow(new Rect(0, 0, 10000, 20));
-    }
-
-    public void GetSciData()
-    {
-        if (ResearchAndDevelopment.Instance == null)
-            return;
-
-        dataOutputList = new List<Experiment>();
-        List<ScienceSubject> newExperiments = new List<ScienceSubject>();
-        List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
-        List<ScienceSubject> subjectslist = ResearchAndDevelopment.GetSubjects();
-
-        //I am glad this code runs only once! Too expensive!
-        foreach (string id in exIds)
-        {
-            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
-            {
-                foreach (CelestialBody body in FlightGlobals.Bodies)
-                {
-                    bool ocean = body.ocean;
-                    if (ExperimentSituations.SrfSplashed == experimentSituation && !ocean)
-                        continue;
-                    if ((ExperimentSituations.FlyingHigh == experimentSituation || ExperimentSituations.FlyingLow == experimentSituation) && !body.atmosphere)
-                        continue;
-                    ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(id);
-                    bool available = experiment.IsAvailableWhile(experimentSituation, body);
-                    if (available)
-                    {
-                        bool shouldHaveBiome = experiment.BiomeIsRelevantWhile(experimentSituation);
-                        if (shouldHaveBiome)
-                        {
-                            foreach (string biome in ResearchAndDevelopment.GetBiomeTags(body))
-                            {
-                                if (KSPScienceSettings.getBoolSetting("ShowOnlyKnownBiomes"))
-                                {
-                                    bool foundBiome = subjectslist.Any(subject => subject.id.Contains("@" + body.name) && subject.id.Contains(biome.Replace(" ", "")));
-                                    if (!foundBiome) continue;
-                                }
-                                ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, biome);
-                                if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
-                                newExperiments.Add(ssj);
-                            }
-                            if (body.BiomeMap.Attributes.Length == 0)
-                            {
-                                ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, "");
-                                if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
-                                newExperiments.Add(ssj);
-                            }
-                        } else
-                        {
-                            ScienceSubject ssj = new ScienceSubject(experiment, experimentSituation, body, "");
-                            if (id == "asteroidSample") ssj.scienceCap = experiment.scienceCap;
-                            newExperiments.Add(ssj);
-                        }
-                    }
-                }
-            }
-        }
-
-
-        foreach (ScienceSubject scienceSubject in subjectslist)
-        {
-            newExperiments.RemoveAll(subject => subject.id == scienceSubject.id);
-            string title = scienceSubject.id;
-            double earned = Math.Round(scienceSubject.science, 1);
-            double remain = Math.Round(scienceSubject.scienceCap - scienceSubject.science, 1);
-            string body = LibraryUtils.FindExperimentBody(scienceSubject.id.Split('@')[1]);
-            string type = scienceSubject.id.Split('@')[0];
-            Experiment experiment = new Experiment(title, earned, remain, body, type);
-            dataOutputList.Add(experiment);
-        }
-
-        foreach (ScienceSubject newExperiment in newExperiments)
-        {
-            newExperiment.scientificValue = 1f;
-            CelestialBody thisBody = FlightGlobals.Bodies.Find(celestialBody => newExperiment.id.Split('@')[1].StartsWith(celestialBody.name));
-            Experiment ex = new Experiment(newExperiment.id, 0, Math.Round(newExperiment.scienceCap, 1), thisBody.name, newExperiment.id.Split('@')[0]);
-            dataOutputList.Add(ex);
-        }
-        dataOutputList.Sort(SortByName);
-
-        if (KSPScienceSettings.getBoolSetting("ShowOnlyKnownExperiments"))
-            allExperimentTypes = GetKnownExperimentTypes();
-        else
-            allExperimentTypes = GetAllExperimentTypes();
-    }
-
-    public List<Experiment> GetSelectedExperiments(string body, List<Experiment> input = null)
-    {
-        if (input == null)
-            input = dataOutputList;
-        List<Experiment> selectedExperimentsTemp = new List<Experiment>();
-        foreach (Experiment experiment in input)
-        {
-            if (experiment.body == body)
-            {
-                selectedExperimentsTemp.Add(experiment);
-            }
-        }
-        return selectedExperimentsTemp;
-    }
-
-    public List<Experiment> GetSelectedExperimentsByType(string type, List<Experiment> input = null)
-    {
-        if (input == null)
-            input = dataOutputList;
-        List<Experiment> selectedExperimentsTemp = new List<Experiment>();
-        foreach (Experiment experiment in input)
-        {
-            if (experiment.FirstIdType == type)
-                selectedExperimentsTemp.Add(experiment);
-        }
-        return selectedExperimentsTemp;
-    }
-
-    public List<Experiment> GetSelectedExperimentsByTypes(List<string> types, List<Experiment> input = null)
-    {
-        if (input == null)
-            input = dataOutputList;
-        List<Experiment> selectedExperimentsTemp = new List<Experiment>();
-        foreach (Experiment experiment in input)
-        {
-            if (types.Contains(experiment.FirstIdType))
-                selectedExperimentsTemp.Add(experiment);
-        }
-        return selectedExperimentsTemp;
-    }
-
-    public List<string> GetKnownExperimentTypes()
-    {
-        List<string> known = new List<string>();
-        List<ScienceSubject> subjects = ResearchAndDevelopment.GetSubjects();
-        foreach (ScienceSubject subject in subjects)
-        {
-            string tmpid = subject.id.Split('@')[0];
-            if (!known.Contains(tmpid))
-                known.Add(tmpid);
-        }
-        known.Sort();
-        return known;
-    }
-
-    public List<string> GetAllExperimentTypes()
-    {
-        List<string> selectedExperimentTypesTemp = new List<string>();
-        foreach (Experiment experiment in dataOutputList)
-        {
-            if (!selectedExperimentTypesTemp.Contains(experiment.FirstIdType))
-                selectedExperimentTypesTemp.Add(experiment.FirstIdType);
-        }
-        selectedExperimentTypesTemp.Sort();
-        return selectedExperimentTypesTemp;
-    }
-
-    private int SortByNameD(Experiment o1, Experiment o2)
-    {
-        return SortByName(o2, o1);
-    }
-
-    private int SortByName(Experiment o1, Experiment o2)
-    {
-        if (o1.earned == 0 && o2.earned == 0)
-            return o1.fullName.CompareTo(o2.fullName);
-        if (o1.earned == 0 || o2.earned == 0)
-            return o2.earned.CompareTo(o1.earned);
-        return o1.fullName.CompareTo(o2.fullName);
-    }
-
-    private int SortByEarnedD(Experiment o1, Experiment o2)
-    {
-        return SortByEarned(o2, o1);
-    }
-
-    private int SortByEarned(Experiment o1, Experiment o2)
-    {
-        return o2.earned.CompareTo(o1.earned);
-    }
-
-    private int SortByRemainD(Experiment o1, Experiment o2)
-    {
-        return SortByRemain(o2, o1);
-    }
-
-    private int SortByRemain(Experiment o1, Experiment o2)
-    {
-        if (o1.earned == 0 && o2.earned == 0)
-            return o2.remain.CompareTo(o1.remain);
-        if (o1.earned == 0 || o2.earned == 0)
-            return o2.earned.CompareTo(o1.earned);
-        return o2.remain.CompareTo(o1.remain);
-    }
-
-    private int SortByTypeD(Experiment o1, Experiment o2)
-    {
-        return SortByType(o2, o1);
-    }
-
-    private int SortByType(Experiment o1, Experiment o2)
-    {
-        if (o1.earned == 0 && o2.earned == 0)
-            return o1.FirstIdType.CompareTo(o2.FirstIdType);
-        if (o1.earned == 0 || o2.earned == 0)
-            return o2.earned.CompareTo(o1.earned);
-        return o1.FirstIdType.CompareTo(o2.FirstIdType);
     }
 }

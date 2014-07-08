@@ -2,7 +2,7 @@
 {
     private static ConfigNode cn;
     private static string filename = "GameData/KSPScienceLibrary/TextReplacer.cfg";
-    private static bool readOnce = false; //You don't want to read the config 1000 times per second. Use TRUE for release!
+    private static bool readOnce = true; //You don't want to read the config 1000 times per second. Use TRUE for release!
 
     public static string GetReplaceForString(string input)
     {

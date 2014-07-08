@@ -4,6 +4,25 @@ using System.Collections.Generic;
 internal class LibraryUtils
 {
     private static Dictionary<string, List<string>> _experimentToPartRelation;
+    private static readonly Dictionary<CelestialBody, Dictionary<string, Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>>> _databaseDictionary = new Dictionary<CelestialBody, Dictionary<string, Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>>>();
+    private static readonly List<LibraryExperiment> libraryExperiments = new List<LibraryExperiment>();
+
+
+    /// <summary>
+    ///     use GetAllPossibleLibraryExperiments to fill with data.
+    /// </summary>
+    public static List<LibraryExperiment> LibraryExperiments
+    {
+        get { return libraryExperiments; }
+    }
+
+    /// <summary>
+    ///     use GetAllPossibleLibraryExperiments to fill with data.
+    /// </summary>
+    public static Dictionary<CelestialBody, Dictionary<string, Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>>> DatabaseDictionary
+    {
+        get { return _databaseDictionary; }
+    }
 
     /// <summary>
     ///     Replace for ResearchAndDevelopment.GetExperimentSubject function. Original function inserts new ScienceSubject in
@@ -147,5 +166,129 @@ internal class LibraryUtils
             }
         }
         return _experimentToPartRelation;
+    }
+
+    /// <summary>
+    ///     Reads all configs and creates all possible experiments.
+    ///     Not all of them can be created in game. For example impossible "landed on Jool".
+    ///     But from the config layer it is still possible.
+    ///     Because config does not know about "special conditions" of Jool surface.
+    ///     Don't use this function too often!
+    /// </summary>
+    /// <returns></returns>
+    public static void GetAllPossibleLibraryExperiments()
+    {
+        libraryExperiments.Clear();
+        List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
+        foreach (string firstId in exIds)
+        {
+            foreach (ExperimentSituations experimentSituation in Enum.GetValues(typeof (ExperimentSituations)))
+            {
+                foreach (CelestialBody body in FlightGlobals.Bodies)
+                {
+                    bool ocean = body.ocean;
+                    if (ExperimentSituations.SrfSplashed == experimentSituation && !ocean)
+                        continue;
+                    if ((ExperimentSituations.FlyingHigh == experimentSituation || ExperimentSituations.FlyingLow == experimentSituation) && !body.atmosphere)
+                        continue;
+                    ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(firstId);
+                    bool available = experiment.IsAvailableWhile(experimentSituation, body);
+                    if (available)
+                    {
+                        bool shouldHaveBiome = experiment.BiomeIsRelevantWhile(experimentSituation);
+                        if (shouldHaveBiome && body.BiomeMap.Attributes.Length > 0)
+                            foreach (string biome in ResearchAndDevelopment.GetBiomeTags(body))
+                            {
+                                LibraryExperiment libraryExperiment = new LibraryExperiment(firstId, experimentSituation, body, experiment, shouldHaveBiome, biome);
+                                libraryExperiments.Add(libraryExperiment);
+                                addToDatabase(libraryExperiment);
+                            }
+                        else
+                        {
+                            LibraryExperiment libraryExperiment = new LibraryExperiment(firstId, experimentSituation, body, experiment, shouldHaveBiome, "");
+                            libraryExperiments.Add(libraryExperiment);
+                            addToDatabase(libraryExperiment);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void addToDatabase(LibraryExperiment experiment)
+    {
+        if (!DatabaseDictionary.ContainsKey(experiment.CelestialBody))
+            DatabaseDictionary.Add(experiment.CelestialBody, new Dictionary<string, Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>>());
+        if (!DatabaseDictionary[experiment.CelestialBody].ContainsKey(experiment.Biome))
+            DatabaseDictionary[experiment.CelestialBody].Add(experiment.Biome, new Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>());
+        if (!DatabaseDictionary[experiment.CelestialBody][experiment.Biome].ContainsKey(experiment.FirstId))
+            DatabaseDictionary[experiment.CelestialBody][experiment.Biome].Add(experiment.FirstId, new Dictionary<ExperimentSituations, LibraryExperiment>());
+        if (!DatabaseDictionary[experiment.CelestialBody][experiment.Biome][experiment.FirstId].ContainsKey(experiment.ExperimentSituation))
+            DatabaseDictionary[experiment.CelestialBody][experiment.Biome][experiment.FirstId].Add(experiment.ExperimentSituation, experiment);
+    }
+
+    /// <summary>
+    ///     Filter Experiments and return only Experiments those have CelestialBodys & ExperimentIDs & Biomes
+    ///     ( (body1 || ... || bodyN) && (Experiment1 || ... || ExperimentN) && (Biome1 || ... || BiomeN) )
+    ///     Don't use too often!
+    /// </summary>
+    /// <param name="libraryExperiments">Input LibraryExperiment List</param>
+    /// <param name="filterBy_body_experiment_biome">
+    ///     can be of type Celestial body = filter body, ScienceExperiment = filter ExperimentId,
+    ///     String = filter Biomes
+    /// </param>
+    /// <returns>Result List</returns>
+    public static List<LibraryExperiment> FilterLibraryExperiments(List<LibraryExperiment> libraryExperiments, List<CelestialBody> filterByBody, List<ScienceExperiment> filterByExperiment, List<string> filterByBiome)
+    {
+        List<LibraryExperiment> result = new List<LibraryExperiment>();
+        foreach (LibraryExperiment libraryExperiment in libraryExperiments)
+        {
+            bool bodyFilter = false;
+            bool experimentFilter = false;
+            bool biomeFilter = false;
+
+            if (filterByBody.Count == 0) bodyFilter = true;
+            else
+                foreach (CelestialBody celestialBody in filterByBody)
+                    if (celestialBody == libraryExperiment.CelestialBody)
+                    {
+                        bodyFilter = true;
+                        break;
+                    }
+            if (filterByExperiment.Count == 0) experimentFilter = true;
+            else
+                foreach (ScienceExperiment experiment in filterByExperiment)
+                    if (experiment.id == libraryExperiment.ScienceExperiment.id)
+                    {
+                        experimentFilter = true;
+                        break;
+                    }
+            if (filterByBiome.Count == 0) biomeFilter = true;
+            else
+                foreach (string biome in filterByBiome)
+                    if (biome == libraryExperiment.Biome)
+                    {
+                        biomeFilter = true;
+                        break;
+                    }
+            if (bodyFilter && experimentFilter && biomeFilter)
+                result.Add(libraryExperiment);
+        }
+        return result;
+    }
+
+    /// <summary>
+    ///     Go through list of planets and write down all biomes.
+    ///     Don't use too often!
+    /// </summary>
+    /// <param name="planets">input list</param>
+    /// <returns>Found biomes</returns>
+    public static List<string> GetBiomesForPlanets(IEnumerable<CelestialBody> planets)
+    {
+        List<string> result = new List<string>();
+        foreach (CelestialBody planet in planets)
+            foreach (string biome in ResearchAndDevelopment.GetBiomeTags(planet))
+                result.Add(biome);
+        return result;
     }
 }

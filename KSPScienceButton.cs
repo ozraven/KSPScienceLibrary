@@ -21,7 +21,7 @@ public class KSPScienceButton : MonoBehaviour
 
     private void button1_OnClick(ClickEvent e)
     {
-        if (KSPScienceLibrary.drawWindow)
+        if (KSPScienceLibrary.DrawWindow)
             KSPScienceLibrary.Hide();
         else
             KSPScienceLibrary.Show();
