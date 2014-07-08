@@ -1,4 +1,6 @@
-﻿public class LibraryExperiment
+﻿using System;
+
+public class LibraryExperiment
 {
     private readonly string biome;
     private readonly CelestialBody celestialBody;
@@ -7,9 +9,9 @@
     private readonly string firstId;
 //     private bool needAtmosphere;
 //     private bool needOcean;
-    private readonly float scienceCapacity;
+
+    private readonly ScienceSubject subject;
     private bool needBiome;
-    private ScienceSubject subject;
 
     public LibraryExperiment(string firstId, ExperimentSituations experimentSituation, CelestialBody celestialBody, ScienceExperiment experiment, bool shouldHaveBiome, string biome)
     {
@@ -21,9 +23,9 @@
         needBiome = shouldHaveBiome;
         this.firstId = firstId;
         this.experiment = experiment;
-        subject = new ScienceSubject(experiment, experimentSituation, celestialBody, biome);
+        //subject = new ScienceSubject(experiment, experimentSituation, celestialBody, biome);
+        subject = LibraryUtils.GetExperimentSubject(experiment, experimentSituation, celestialBody, biome);
         if (firstId == "asteroidSample") subject.scienceCap = experiment.scienceCap;
-        scienceCapacity = subject.scienceCap;
     }
 
     public ExperimentSituations ExperimentSituation
@@ -53,10 +55,31 @@
 
     public float ScienceCapacity
     {
-        get { return scienceCapacity; }
+        get { return (float) Math.Round(subject.scienceCap, 1); }
     }
 
     public bool ShowInLibrary { get; set; }
 
     public bool ShowInMonitor { get; set; }
+
+
+    public float Earned
+    {
+        get { return (float) Math.Round(subject.science, 1); }
+    }
+
+    public float EarnedPercent
+    {
+        get { return (float) Math.Round(100.0*subject.science/subject.scienceCap, 0); }
+    }
+
+    public float Remain
+    {
+        get { return (float) Math.Round(subject.scienceCap - subject.science, 1); }
+    }
+
+    public float RemainPercent
+    {
+        get { return (float) Math.Round(100.0*(subject.scienceCap - subject.science)/subject.scienceCap, 0); }
+    }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 internal class LibraryUtils
 {
@@ -178,6 +180,7 @@ internal class LibraryUtils
     /// <returns></returns>
     public static void GetAllPossibleLibraryExperiments()
     {
+        MonoBehaviour.print("GetAllPossibleLibraryExperiments");
         libraryExperiments.Clear();
         List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
         foreach (string firstId in exIds)
@@ -240,6 +243,7 @@ internal class LibraryUtils
     /// <returns>Result List</returns>
     public static List<LibraryExperiment> FilterLibraryExperiments(List<LibraryExperiment> libraryExperiments, List<CelestialBody> filterByBody, List<ScienceExperiment> filterByExperiment, List<string> filterByBiome)
     {
+        MonoBehaviour.print("FilterLibraryExperiments");
         List<LibraryExperiment> result = new List<LibraryExperiment>();
         foreach (LibraryExperiment libraryExperiment in libraryExperiments)
         {
@@ -285,10 +289,88 @@ internal class LibraryUtils
     /// <returns>Found biomes</returns>
     public static List<string> GetBiomesForPlanets(IEnumerable<CelestialBody> planets)
     {
+        MonoBehaviour.print("GetBiomesForPlanets");
         List<string> result = new List<string>();
         foreach (CelestialBody planet in planets)
             foreach (string biome in ResearchAndDevelopment.GetBiomeTags(planet))
                 result.Add(biome);
         return result;
+    }
+
+
+    public static LibraryView GetLibraryView(List<CelestialBody> pressedCelestialBodies, List<string> pressedBiomes, List<ScienceExperiment> pressedScienceExperiments)
+    {
+        MonoBehaviour.print("GetLibraryView");
+        LibraryView libraryView = new LibraryView();
+
+        foreach (CelestialBody body in DatabaseDictionary.Keys)
+        {
+            if (pressedCelestialBodies.Count == 0 || pressedCelestialBodies.Contains(body))
+            {
+                foreach (string biome in DatabaseDictionary[body].Keys)
+                {
+                    if (pressedBiomes.Count == 0 || pressedBiomes.Contains(biome))
+                    {
+                        //GUILayout.BeginHorizontal();
+                        LibraryRow row = new LibraryRow(new GUIStyle());
+
+                        libraryView.rows.Add(row);
+                        GUIStyle style = new GUIStyle(HighLogic.Skin.label);
+
+                        style.padding = new RectOffset(5, 5, 30, 2);
+                        row.cells.Add(new LibraryCell(body.name + " - " + biome, style));
+                        //GUILayout.Label(body.name + " - " + biome, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+
+                        foreach (string situationStr in Enum.GetNames(typeof (ExperimentSituations)))
+                        {
+                            //GUILayout.Label(situationStr, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                            row.cells.Add(new LibraryCell(situationStr, style));
+                        }
+                        //GUILayout.EndHorizontal();
+
+                        foreach (string firstID in DatabaseDictionary[body][biome].Keys)
+                        {
+                            if (pressedScienceExperiments.Count == 0 || pressedScienceExperiments.Any(experiment => experiment.id == firstID))
+                            {
+                                //GUILayout.BeginHorizontal();
+                                //GUILayout.Label(firstID, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                LibraryRow row2 = new LibraryRow(new GUIStyle());
+                                libraryView.rows.Add(row2);
+                                GUIStyle style2 = new GUIStyle(HighLogic.Skin.label);
+                                style2.padding = new RectOffset(5, 5, 1, 1);
+                                row2.cells.Add(new LibraryCell(TextReplacer.GetReplaceForString(firstID), style2));
+                                foreach (ExperimentSituations situation in Enum.GetValues(typeof (ExperimentSituations)))
+                                {
+                                    if(situation == ExperimentSituations.SrfSplashed && !body.ocean)
+                                        continue;
+                                    if((situation == ExperimentSituations.FlyingHigh || situation == ExperimentSituations.FlyingLow) && !body.atmosphere)
+                                        continue;
+                                    if (DatabaseDictionary[body][biome][firstID].ContainsKey(situation))
+                                    {
+                                        LibraryExperiment lib = DatabaseDictionary[body][biome][firstID][situation];
+                                        if (lib != null)
+                                        {
+                                            //GUILayout.Label(lib.ScienceCapacity.ToString(), GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                            row2.cells.Add(new LibraryCell(lib.Earned+" / "+lib.ScienceCapacity+" ("+lib.EarnedPercent+"%)" , new GUIStyle(HighLogic.Skin.label)));
+                                        } else
+                                        {
+                                            //GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                            row2.cells.Add(new LibraryCell("---", new GUIStyle(HighLogic.Skin.label)));
+                                        }
+                                    } else
+                                    {
+                                        //GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                        row2.cells.Add(new LibraryCell("---", new GUIStyle(HighLogic.Skin.label)));
+                                    }
+                                }
+                                //GUILayout.EndHorizontal();
+                            }
+                        }
+                        //GUILayout.Space(20);
+                    }
+                }
+            }
+        }
+        return libraryView;
     }
 }

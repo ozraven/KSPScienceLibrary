@@ -19,7 +19,7 @@ public class KSPScienceLibrary : MonoBehaviour
     private readonly List<ScienceExperiment> pressedScienceExperiments = new List<ScienceExperiment>();
     private List<string> biomesList;
     private CelestialBody[] bodies;
-    private List<LibraryExperiment> filtered;
+    //private List<LibraryExperiment> filtered;
     private bool lastdrawWindow;
     //private List<LibraryExperiment> libraryExperiments = new List<LibraryExperiment>();
     private bool resizingWindow;
@@ -29,7 +29,7 @@ public class KSPScienceLibrary : MonoBehaviour
     private Vector2 scrollExperiments;
     private Vector2 scrollPlanets;
 
-    private LibraryView libraryView = new LibraryView();
+    private LibraryView libraryView;
     private CelestialBody sun;
 
     public static bool DrawWindow
@@ -247,61 +247,21 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.BeginHorizontal();
         GUILayout.BeginVertical();
         scrollContentPage = GUILayout.BeginScrollView(scrollContentPage);
-        if (filterChanged || filtered == null)
-            filtered = LibraryUtils.FilterLibraryExperiments(LibraryUtils.LibraryExperiments, pressedCelestialBodies, pressedScienceExperiments, pressedBiomes);
-
-        //IEnumerable<CelestialBody> bodies = pressedCelestialBodies.Count == 0 ? (IEnumerable<CelestialBody>) bodies : pressedCelestialBodies;
-        //Get biomes for body
-        //getSituations
-        //Experiments from body, biome, situation????????????
-
-        //or should I use SQL???
-
-        float width = (windowPosition.width - 280)/7;
-        foreach (CelestialBody body in LibraryUtils.DatabaseDictionary.Keys)
+        if (filterChanged || libraryView == null)
+            libraryView = LibraryUtils.GetLibraryView(pressedCelestialBodies, pressedBiomes, pressedScienceExperiments);
+        float width = (windowPosition.width - 280) / 7;
+        foreach (LibraryRow row in libraryView.rows)
         {
-            if (pressedCelestialBodies.Count == 0 || pressedCelestialBodies.Contains(body))
+            row.style.fixedWidth = width;
+            GUILayout.BeginHorizontal(row.style);
+            foreach (LibraryCell libraryCell in row.cells)
             {
-                foreach (string biome in LibraryUtils.DatabaseDictionary[body].Keys)
-                {
-                    if (pressedBiomes.Count == 0 || pressedBiomes.Contains(biome))
-                    {
-                        GUILayout.BeginHorizontal();
-                        GUILayout.Label(body.name + " - " + biome, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                        foreach (string situationStr in Enum.GetNames(typeof (ExperimentSituations)))
-                        {
-                            GUILayout.Label(situationStr, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                        }
-                        GUILayout.EndHorizontal();
-
-                        foreach (string firstID in LibraryUtils.DatabaseDictionary[body][biome].Keys)
-                        {
-                            if (pressedScienceExperiments.Count == 0 || pressedScienceExperiments.Any(experiment => experiment.id == firstID))
-                            {
-                                GUILayout.BeginHorizontal();
-                                GUILayout.Label(firstID, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                                foreach (ExperimentSituations situation in Enum.GetValues(typeof (ExperimentSituations)))
-                                {
-                                    if (LibraryUtils.DatabaseDictionary[body][biome][firstID].ContainsKey(situation))
-                                    {
-                                        LibraryExperiment lib = LibraryUtils.DatabaseDictionary[body][biome][firstID][situation];
-                                        if (lib != null)
-                                            GUILayout.Label(lib.ScienceCapacity.ToString(), GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                                        else
-                                            GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                                    } else
-                                    {
-                                        GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                                    }
-                                }
-                                GUILayout.EndHorizontal();
-                            }
-                        }
-                        GUILayout.Space(20);
-                    }
-                }
+                libraryCell.style.fixedWidth = width;
+                GUILayout.Label(libraryCell.content, libraryCell.style);
             }
+            GUILayout.EndHorizontal();
         }
+
 
         GUILayout.EndScrollView();
         GUILayout.EndVertical();

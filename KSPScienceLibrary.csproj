@@ -58,6 +58,7 @@
     <Compile Include="KSPScienceMonitorButton.cs" />
     <Compile Include="KSPScienceSettings.cs" />
     <Compile Include="LibraryExperiment.cs" />
+    <Compile Include="LibraryView.cs" />
     <Compile Include="LibraryUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextReplacer.cs" />

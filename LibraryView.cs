@@ -8,11 +8,23 @@ public class LibraryView
 
 public class LibraryRow
 {
+    public GUIStyle style;
     public List<LibraryCell> cells = new List<LibraryCell>();
+
+    public LibraryRow(GUIStyle style)
+    {
+        this.style = style;
+    }
 }
 
 public class LibraryCell
 {
     public string content;
     public GUIStyle style;
+
+    public LibraryCell(string content, GUIStyle style)
+    {
+        this.content = content;
+        this.style = style;
+    }
 }
