@@ -105,7 +105,8 @@ public class KSPScienceMonitor : MonoBehaviour
                         }
                     }
                     {
-                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        bool foundSubject;
+                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "", out foundSubject);
                         ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
@@ -122,7 +123,8 @@ public class KSPScienceMonitor : MonoBehaviour
                     bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
                     if (available)
                     {
-                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        bool foundSubject;
+                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "", out foundSubject);
                         ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
@@ -134,7 +136,8 @@ public class KSPScienceMonitor : MonoBehaviour
                     bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
                     if (available)
                     {
-                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                        bool foundSubject;
+                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "", out foundSubject);
                         ExperimentView experimentView = new ExperimentView(scienceSubject);
                         if (!Output.Contains(experimentView))
                             Output.Add(experimentView);
@@ -156,7 +159,8 @@ public class KSPScienceMonitor : MonoBehaviour
                         if (available)
                         {
                             string asteroidname = asteroid.part.partInfo.name + asteroid.part.flightID;
-                            ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                            bool foundSubject;
+                            ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "", out foundSubject);
                             ExperimentView experimentView = new ExperimentView(scienceSubject);
                             if (!Output.Contains(experimentView))
                                 Output.Add(experimentView);

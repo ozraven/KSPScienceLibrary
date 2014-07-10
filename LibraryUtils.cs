@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 
 internal class LibraryUtils
 {
-    private static Dictionary<string, List<string>> _experimentToPartRelation;
+    private static Dictionary<string, string> _experimentToPartRelation;
     private static readonly Dictionary<CelestialBody, Dictionary<string, Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>>> _databaseDictionary = new Dictionary<CelestialBody, Dictionary<string, Dictionary<string, Dictionary<ExperimentSituations, LibraryExperiment>>>>();
-    private static readonly List<LibraryExperiment> libraryExperiments = new List<LibraryExperiment>();
+    //private static readonly List<LibraryExperiment> libraryExperiments = new List<LibraryExperiment>();
 
 
-    /// <summary>
-    ///     use GetAllPossibleLibraryExperiments to fill with data.
-    /// </summary>
-    public static List<LibraryExperiment> LibraryExperiments
-    {
-        get { return libraryExperiments; }
-    }
+//     /// <summary>
+//     ///     use GetAllPossibleLibraryExperiments to fill with data.
+//     /// </summary>
+//     public static List<LibraryExperiment> LibraryExperiments
+//     {
+//         get { return libraryExperiments; }
+//     }
 
     /// <summary>
     ///     use GetAllPossibleLibraryExperiments to fill with data.
@@ -36,21 +37,27 @@ internal class LibraryUtils
     /// <param name="situation"></param>
     /// <param name="body"></param>
     /// <param name="biome"></param>
+    /// <param name="foundSubject">
+    ///     True if the Subject was found in the Game RAD database. False if we have just created a new
+    ///     Subject
+    /// </param>
     /// <returns></returns>
-    public static ScienceSubject GetExperimentSubject(ScienceExperiment experiment, ExperimentSituations situation, CelestialBody body, string biome)
+    public static ScienceSubject GetExperimentSubject(ScienceExperiment experiment, ExperimentSituations situation, CelestialBody body, string biome, out bool foundSubject)
     {
+        foundSubject = true;
         ScienceSubject scienceSubject = new ScienceSubject(experiment, situation, body, biome);
         ScienceSubject subject = ResearchAndDevelopment.GetSubjectByID(scienceSubject.id);
         // this will cause error in log, but it is intended behavior. Well, not "intended", but there is no other way to do it.
         if (subject != null)
             return subject;
+        foundSubject = false;
         return scienceSubject;
     }
 
     /// <summary>
     ///     Replace for ResearchAndDevelopment.GetExperimentSubject function. Original function inserts new ScienceSubject in
     ///     the database, but we do not want that.
-    ///     This function is to use with asteroids.
+    ///     This function is to use with asteroids only.
     ///     If there is no such experiment in the database the game will write "error" in log. Just ignore it.
     /// </summary>
     /// <param name="experiment"></param>
@@ -59,14 +66,20 @@ internal class LibraryUtils
     /// <param name="sourceTitle">Asteroid title</param>
     /// <param name="body"></param>
     /// <param name="biome"></param>
+    /// <param name="foundSubject">
+    ///     True if the Subject was found in the Game RAD database. False if we have just created a new
+    ///     Subject
+    /// </param>
     /// <returns></returns>
-    public static ScienceSubject GetExperimentSubject(ScienceExperiment experiment, ExperimentSituations situation, string sourceUId, string sourceTitle, CelestialBody body, string biome)
+    public static ScienceSubject GetExperimentSubject(ScienceExperiment experiment, ExperimentSituations situation, string sourceUId, string sourceTitle, CelestialBody body, string biome, out bool foundSubject)
     {
+        foundSubject = true;
         ScienceSubject scienceSubject = new ScienceSubject(experiment, situation, sourceUId, sourceTitle, body, biome);
         ScienceSubject subject = ResearchAndDevelopment.GetSubjectByID(scienceSubject.id);
         // this will cause error in log, but it is intended behavior. Well, not "intended", but there is no other way to do it.
         if (subject != null)
             return subject;
+        foundSubject = false;
         return scienceSubject;
     }
 
@@ -149,10 +162,13 @@ internal class LibraryUtils
     ///     It runs only once, but there is no way to add new Science Parts in runtime, is it?
     /// </summary>
     /// <returns>Dictionary with KEY=ExperimentFirstId, Value=List of Parts those can deploy this experiment</returns>
-    public static Dictionary<string, List<string>> GetExperimentToPartRelation()
+    public static Dictionary<string, string> GetExperimentToPartRelation()
     {
         if (_experimentToPartRelation != null) return _experimentToPartRelation;
-        _experimentToPartRelation = new Dictionary<string, List<string>>();
+        _experimentToPartRelation = new Dictionary<string, string>();
+
+        Dictionary<string, List<string>> tmp = new Dictionary<string, List<string>>();
+
         foreach (AvailablePart availablePart in PartLoader.LoadedPartsList)
         {
             string partName = availablePart.title;
@@ -162,26 +178,43 @@ internal class LibraryUtils
             List<ModuleScienceExperiment> modules2 = part.FindModulesImplementing<ModuleScienceExperiment>();
             foreach (ModuleScienceExperiment moduleScienceExperiment in modules2)
             {
-                if (!_experimentToPartRelation.ContainsKey(moduleScienceExperiment.experimentID))
-                    _experimentToPartRelation.Add(moduleScienceExperiment.experimentID, new List<string>());
-                _experimentToPartRelation[moduleScienceExperiment.experimentID].Add(partName);
+                if (!tmp.ContainsKey(moduleScienceExperiment.experimentID))
+                    tmp.Add(moduleScienceExperiment.experimentID, new List<string>());
+                tmp[moduleScienceExperiment.experimentID].Add(partName + Environment.NewLine);
             }
         }
+        foreach (KeyValuePair<string, List<string>> keyValuePair in tmp)
+        {
+            _experimentToPartRelation.Add(keyValuePair.Key, String.Concat(keyValuePair.Value.ToArray()));
+        }
+
+        if (_experimentToPartRelation.ContainsKey("asteroidSample"))
+            _experimentToPartRelation["asteroidSample"] = "EVA" + Environment.NewLine + _experimentToPartRelation["asteroidSample"];
+        else
+            _experimentToPartRelation.Add("asteroidSample", "EVA" + Environment.NewLine);
+        if (_experimentToPartRelation.ContainsKey("evaReport"))
+            _experimentToPartRelation["evaReport"] = "EVA" + Environment.NewLine + _experimentToPartRelation["evaReport"];
+        else
+            _experimentToPartRelation.Add("evaReport", "EVA" + Environment.NewLine);
+        if (_experimentToPartRelation.ContainsKey("surfaceSample"))
+            _experimentToPartRelation["surfaceSample"] = "EVA" + Environment.NewLine + _experimentToPartRelation["surfaceSample"];
+        else
+            _experimentToPartRelation.Add("surfaceSample", "EVA" + Environment.NewLine);
+
         return _experimentToPartRelation;
     }
 
     /// <summary>
     ///     Reads all configs and creates all possible experiments.
-    ///     Not all of them can be created in game. For example impossible "landed on Jool".
-    ///     But from the config layer it is still possible.
-    ///     Because config does not know about "special conditions" of Jool surface.
+    ///     Some of them are in blacklist, like impossible "landed on Jool".
     ///     Don't use this function too often!
     /// </summary>
     /// <returns></returns>
     public static void GetAllPossibleLibraryExperiments()
     {
         MonoBehaviour.print("GetAllPossibleLibraryExperiments");
-        libraryExperiments.Clear();
+        List<ScienceSubject> gameSubjects = ResearchAndDevelopment.GetSubjects();
+        //libraryExperiments.Clear();
         List<string> exIds = ResearchAndDevelopment.GetExperimentIDs();
         foreach (string firstId in exIds)
         {
@@ -189,10 +222,11 @@ internal class LibraryUtils
             {
                 foreach (CelestialBody body in FlightGlobals.Bodies)
                 {
-                    bool ocean = body.ocean;
-                    if (ExperimentSituations.SrfSplashed == experimentSituation && !ocean)
+                    if ((experimentSituation == ExperimentSituations.SrfSplashed || experimentSituation == ExperimentSituations.SrfLanded) && (body.name == "Jool" || body.name == "Sun"))
                         continue;
-                    if ((ExperimentSituations.FlyingHigh == experimentSituation || ExperimentSituations.FlyingLow == experimentSituation) && !body.atmosphere)
+                    if (!body.ocean && ExperimentSituations.SrfSplashed == experimentSituation)
+                        continue;
+                    if (!body.atmosphere && (ExperimentSituations.FlyingHigh == experimentSituation || ExperimentSituations.FlyingLow == experimentSituation))
                         continue;
                     ScienceExperiment experiment = ResearchAndDevelopment.GetExperiment(firstId);
                     bool available = experiment.IsAvailableWhile(experimentSituation, body);
@@ -202,20 +236,28 @@ internal class LibraryUtils
                         if (shouldHaveBiome && body.BiomeMap.Attributes.Length > 0)
                             foreach (string biome in ResearchAndDevelopment.GetBiomeTags(body))
                             {
+                                if (experimentSituation != ExperimentSituations.SrfLanded && (biome == "KSC" || biome == "Runway" || biome == "LaunchPad")) continue;
                                 LibraryExperiment libraryExperiment = new LibraryExperiment(firstId, experimentSituation, body, experiment, shouldHaveBiome, biome);
-                                libraryExperiments.Add(libraryExperiment);
+                                //libraryExperiments.Add(libraryExperiment);
                                 addToDatabase(libraryExperiment);
+                                gameSubjects.Remove(libraryExperiment.Subject);
                             }
                         else
                         {
                             LibraryExperiment libraryExperiment = new LibraryExperiment(firstId, experimentSituation, body, experiment, shouldHaveBiome, "");
-                            libraryExperiments.Add(libraryExperiment);
+                            //libraryExperiments.Add(libraryExperiment);
                             addToDatabase(libraryExperiment);
+                            gameSubjects.Remove(libraryExperiment.Subject);
                         }
                     }
                 }
             }
         }
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.AppendLine("BUG! Still not found science:");
+        foreach (ScienceSubject gameSubject in gameSubjects)
+            stringBuilder.AppendLine(gameSubject.id);
+        MonoBehaviour.print(stringBuilder);
     }
 
     private static void addToDatabase(LibraryExperiment experiment)
@@ -291,6 +333,7 @@ internal class LibraryUtils
     {
         MonoBehaviour.print("GetBiomesForPlanets");
         List<string> result = new List<string>();
+        result.Add("");
         foreach (CelestialBody planet in planets)
             foreach (string biome in ResearchAndDevelopment.GetBiomeTags(planet))
                 result.Add(biome);
@@ -302,7 +345,6 @@ internal class LibraryUtils
     {
         MonoBehaviour.print("GetLibraryView");
         LibraryView libraryView = new LibraryView();
-
         foreach (CelestialBody body in DatabaseDictionary.Keys)
         {
             if (pressedCelestialBodies.Count == 0 || pressedCelestialBodies.Contains(body))
@@ -311,62 +353,48 @@ internal class LibraryUtils
                 {
                     if (pressedBiomes.Count == 0 || pressedBiomes.Contains(biome))
                     {
-                        //GUILayout.BeginHorizontal();
                         LibraryRow row = new LibraryRow(new GUIStyle());
-
-                        libraryView.rows.Add(row);
+                        bool rowHeader = true;
+                        libraryView.rows.AddLast(row);
                         GUIStyle style = new GUIStyle(HighLogic.Skin.label);
-
                         style.padding = new RectOffset(5, 5, 30, 2);
                         row.cells.Add(new LibraryCell(body.name + " - " + biome, style));
-                        //GUILayout.Label(body.name + " - " + biome, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-
                         foreach (string situationStr in Enum.GetNames(typeof (ExperimentSituations)))
                         {
-                            //GUILayout.Label(situationStr, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
                             row.cells.Add(new LibraryCell(situationStr, style));
                         }
-                        //GUILayout.EndHorizontal();
-
                         foreach (string firstID in DatabaseDictionary[body][biome].Keys)
                         {
                             if (pressedScienceExperiments.Count == 0 || pressedScienceExperiments.Any(experiment => experiment.id == firstID))
                             {
-                                //GUILayout.BeginHorizontal();
-                                //GUILayout.Label(firstID, GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
+                                rowHeader = false;
                                 LibraryRow row2 = new LibraryRow(new GUIStyle());
-                                libraryView.rows.Add(row2);
+                                libraryView.rows.AddLast(row2);
                                 GUIStyle style2 = new GUIStyle(HighLogic.Skin.label);
                                 style2.padding = new RectOffset(5, 5, 1, 1);
                                 row2.cells.Add(new LibraryCell(TextReplacer.GetReplaceForString(firstID), style2));
                                 foreach (ExperimentSituations situation in Enum.GetValues(typeof (ExperimentSituations)))
                                 {
-                                    if(situation == ExperimentSituations.SrfSplashed && !body.ocean)
-                                        continue;
-                                    if((situation == ExperimentSituations.FlyingHigh || situation == ExperimentSituations.FlyingLow) && !body.atmosphere)
-                                        continue;
                                     if (DatabaseDictionary[body][biome][firstID].ContainsKey(situation))
                                     {
                                         LibraryExperiment lib = DatabaseDictionary[body][biome][firstID][situation];
                                         if (lib != null)
                                         {
-                                            //GUILayout.Label(lib.ScienceCapacity.ToString(), GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
-                                            row2.cells.Add(new LibraryCell(lib.Earned+" / "+lib.ScienceCapacity+" ("+lib.EarnedPercent+"%)" , new GUIStyle(HighLogic.Skin.label)));
+                                            string tooltip = Environment.NewLine + "Earned:        " + lib.Earned + Environment.NewLine + "Total:          " + lib.ScienceCapacity + Environment.NewLine + "Earned percent: " + lib.EarnedPercent + "%" + Environment.NewLine;
+                                            row2.cells.Add(new LibraryCell(lib.Earned + " / " + lib.ScienceCapacity + " (" + lib.EarnedPercent + "%)", tooltip, new GUIStyle(HighLogic.Skin.label)));
                                         } else
                                         {
-                                            //GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
                                             row2.cells.Add(new LibraryCell("---", new GUIStyle(HighLogic.Skin.label)));
                                         }
                                     } else
                                     {
-                                        //GUILayout.Label("---", GUILayout.MaxWidth(width), GUILayout.MinWidth(width));
                                         row2.cells.Add(new LibraryCell("---", new GUIStyle(HighLogic.Skin.label)));
                                     }
                                 }
-                                //GUILayout.EndHorizontal();
                             }
                         }
-                        //GUILayout.Space(20);
+                        if (rowHeader)
+                            libraryView.rows.RemoveLast();
                     }
                 }
             }

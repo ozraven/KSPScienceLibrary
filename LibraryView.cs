@@ -3,13 +3,13 @@ using UnityEngine;
 
 public class LibraryView
 {
-    public List<LibraryRow> rows = new List<LibraryRow>();
+    public LinkedList<LibraryRow> rows = new LinkedList<LibraryRow>();
 }
 
 public class LibraryRow
 {
-    public GUIStyle style;
     public List<LibraryCell> cells = new List<LibraryCell>();
+    public GUIStyle style;
 
     public LibraryRow(GUIStyle style)
     {
@@ -19,10 +19,22 @@ public class LibraryRow
 
 public class LibraryCell
 {
-    public string content;
+    public GUIContent content;
     public GUIStyle style;
 
     public LibraryCell(string content, GUIStyle style)
+    {
+        this.content = new GUIContent(content);
+        this.style = style;
+    }
+
+    public LibraryCell(string content, string tooltip, GUIStyle style)
+    {
+        this.content = new GUIContent(content, tooltip);
+        this.style = style;
+    }
+
+    public LibraryCell(GUIContent content, GUIStyle style)
     {
         this.content = content;
         this.style = style;

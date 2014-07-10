@@ -14,12 +14,12 @@ public class ComboBox
 
     private int selectedItemIndex;
 
-    public int List(string buttonText, GUIContent[] listContent, GUIStyle listStyle, int defaultSelectedItemIndex)
+    public int List(string buttonText, string[] listContent, GUIStyle listStyle, int defaultSelectedItemIndex)
     {
         return List(new GUIContent(buttonText), listContent, "button", "box", listStyle, defaultSelectedItemIndex);
     }
 
-    public int List(GUIContent buttonContent, GUIContent[] listContent, GUIStyle buttonStyle, GUIStyle boxStyle, GUIStyle listStyle, int defaultSelectedItemIndex)
+    public int List(GUIContent buttonContent, string[] listContent, GUIStyle buttonStyle, GUIStyle boxStyle, GUIStyle listStyle, int defaultSelectedItemIndex)
     {
         selectedItemIndex = defaultSelectedItemIndex;
         if (forceToUnShow)
@@ -57,9 +57,10 @@ public class ComboBox
 
         if (isClickedComboButton)
         {
+            GUIContent guiContent = new GUIContent(listContent[0]);
             Rect rect = GUILayoutUtility.GetLastRect();
-            Rect listRect = new Rect(rect.x, rect.y + listStyle.CalcHeight(listContent[0], 1.0f), rect.width - 20, listStyle.CalcHeight(listContent[0], 1.0f)*listContent.Length);
-            Rect viewtRect = new Rect(rect.x, rect.y + listStyle.CalcHeight(listContent[0], 1.0f), rect.width, listStyle.CalcHeight(listContent[0], 1.0f)*Math.Min(4, listContent.Length));
+            Rect listRect = new Rect(rect.x, rect.y + listStyle.CalcHeight(guiContent, 1.0f), rect.width - 20, listStyle.CalcHeight(guiContent, 1.0f) * listContent.Length);
+            Rect viewtRect = new Rect(rect.x, rect.y + listStyle.CalcHeight(guiContent, 1.0f), rect.width, listStyle.CalcHeight(guiContent, 1.0f) * Math.Min(4, listContent.Length));
             scrollVector = GUI.BeginScrollView(viewtRect, scrollVector, listRect, false, true);
             //GUI.Box(listRect, "", boxStyle);
             int newSelectedItemIndex = GUI.SelectionGrid(listRect, selectedItemIndex, listContent, 1, listStyle);

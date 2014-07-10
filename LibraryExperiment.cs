@@ -11,6 +11,7 @@ public class LibraryExperiment
 //     private bool needOcean;
 
     private readonly ScienceSubject subject;
+
     private bool needBiome;
 
     public LibraryExperiment(string firstId, ExperimentSituations experimentSituation, CelestialBody celestialBody, ScienceExperiment experiment, bool shouldHaveBiome, string biome)
@@ -24,8 +25,14 @@ public class LibraryExperiment
         this.firstId = firstId;
         this.experiment = experiment;
         //subject = new ScienceSubject(experiment, experimentSituation, celestialBody, biome);
-        subject = LibraryUtils.GetExperimentSubject(experiment, experimentSituation, celestialBody, biome);
+        bool foundSubject;
+        subject = LibraryUtils.GetExperimentSubject(experiment, experimentSituation, celestialBody, biome, out foundSubject);
         if (firstId == "asteroidSample") subject.scienceCap = experiment.scienceCap;
+    }
+
+    public ScienceSubject Subject
+    {
+        get { return subject; }
     }
 
     public ExperimentSituations ExperimentSituation

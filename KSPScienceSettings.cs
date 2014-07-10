@@ -1,22 +1,26 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 internal class KSPScienceSettings
 {
     public static KSPScienceSettings settings = new KSPScienceSettings();
     private readonly ComboBox comboBoxControl = new ComboBox();
-    private readonly GUIContent[] comboBoxList;
+    private readonly string[] comboBoxList;
     private readonly GUIStyle listStyle = new GUIStyle();
     private readonly Dictionary<string, bool> settingsBools;
+    private readonly Dictionary<string, Color> settingsColors;
     private readonly Dictionary<string, int> settingsIntegers;
     private readonly Dictionary<string, Rect> settingsRects;
-    private readonly Dictionary<string, GUIStyle> settingsStyles;
+    private readonly Dictionary<string, string> settingsStrings;
+    private readonly Dictionary<string, GUIStyle> settingsStylesTextColor;
     private readonly GUIStyle windowStyle;
-
+    private static GUISkin OrbitMapSkin = AssetBase.GetGUISkin("OrbitMapSkin");
 
     private ConfigNode cn;
     private string filename = "GameData/KSPScienceLibrary/KSPScienceLibrarySettings.cfg";
     public bool shown = false;
+    private Texture2D windowBgColorTexture2D;
 
 
     private Rect windowPosition;
@@ -27,10 +31,12 @@ internal class KSPScienceSettings
         windowStyle = new GUIStyle(HighLogic.Skin.window);
         windowStyle.stretchHeight = true;
         windowStyle.stretchWidth = true;
-        settingsStyles = new Dictionary<string, GUIStyle>();
+        settingsStylesTextColor = new Dictionary<string, GUIStyle>();
         settingsBools = new Dictionary<string, bool>();
         settingsRects = new Dictionary<string, Rect>();
         settingsIntegers = new Dictionary<string, int>();
+        settingsColors = new Dictionary<string, Color>();
+        settingsStrings = new Dictionary<string, string>();
         // ComboBox Start
         /*
         KSP window 1
@@ -45,18 +51,18 @@ internal class KSPScienceSettings
         ExperimentsDialogSkin
         ExpRecoveryDialogSkin
          */
-        comboBoxList = new GUIContent[11];
-        comboBoxList[0] = new GUIContent("KSP window 1");
-        comboBoxList[1] = new GUIContent("KSP window 2");
-        comboBoxList[2] = new GUIContent("KSP window 3");
-        comboBoxList[3] = new GUIContent("KSP window 4");
-        comboBoxList[4] = new GUIContent("KSP window 5");
-        comboBoxList[5] = new GUIContent("KSP window 6");
-        comboBoxList[6] = new GUIContent("KSP window 7");
-        comboBoxList[7] = new GUIContent("OrbitMapSkin");
-        comboBoxList[8] = new GUIContent("PlaqueDialogSkin");
-        comboBoxList[9] = new GUIContent("ExperimentsDialogSkin");
-        comboBoxList[10] = new GUIContent("ExpRecoveryDialogSkin");
+        comboBoxList = new string[9];
+        comboBoxList[0] = ("KSP window 1");
+        comboBoxList[1] = ("KSP window 2");
+        comboBoxList[2] = ("KSP window 3");
+        comboBoxList[3] = ("KSP window 4");
+        comboBoxList[4] = ("KSP window 5");
+        comboBoxList[5] = ("KSP window 6");
+        comboBoxList[6] = ("KSP window 7");
+        comboBoxList[7] = ("OrbitMapSkin");
+        comboBoxList[8] = ("PlaqueDialogSkin");
+        //comboBoxList[9] = new GUIContent("ExperimentsDialogSkin");
+        //comboBoxList[10] = new GUIContent("ExpRecoveryDialogSkin");
 
         listStyle.normal.textColor = Color.white;
         Texture2D tex = new Texture2D(2, 2);
@@ -68,40 +74,38 @@ internal class KSPScienceSettings
         LoadSettings();
     }
 
+    public static string getStringSetting(string settingID)
+    {
+        return settings.settingsStrings[settingID];
+    }
+
+    public static Color getColorSetting(string settingID)
+    {
+        return settings.settingsColors[settingID];
+    }
+
     public static GUIStyle getStyleSetting(string settingID)
     {
-//         if (null == settings)
-//             settings = new KSPScienceSettings();
-        return settings.settingsStyles[settingID];
+        return settings.settingsStylesTextColor[settingID];
     }
 
     public static bool getBoolSetting(string settingID)
     {
-//         if (null == settings)
-//             settings = new KSPScienceSettings();
         return settings.settingsBools[settingID];
     }
 
     public static Rect getRectSetting(string settingID)
     {
-//         if (null == settings)
-//             settings = new KSPScienceSettings();
-        //MonoBehaviour.print("getRectSetting " + settingID + " " + settings.settingsRects[settingID]);
         return settings.settingsRects[settingID];
     }
 
     public static void setRectSetting(string settingID, Rect setting)
     {
-        //MonoBehaviour.print("setRectSetting " + settingID + " " + setting);
-//         if (null == settings)
-//             settings = new KSPScienceSettings();
         settings._setRectSetting(settingID, setting);
     }
 
     private void _setRectSetting(string settingID, Rect setting)
     {
-        //MonoBehaviour.print("_setRectSetting " + settingID + " " + setting);
-
         if (settingsRects.ContainsKey(settingID))
             settingsRects[settingID] = setting;
         else
@@ -111,11 +115,11 @@ internal class KSPScienceSettings
     private void SaveSettings()
     {
         //MonoBehaviour.print("Saving Science Library settings...");
-        //MonoBehaviour.print("styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
+        //MonoBehaviour.print("styles: " + settingsStylesTextColor.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
 
         cn.ClearData();
 
-        foreach (KeyValuePair<string, GUIStyle> settingsStyle in settingsStyles)
+        foreach (KeyValuePair<string, GUIStyle> settingsStyle in settingsStylesTextColor)
             cn.AddValue(settingsStyle.Key, ConfigNode.WriteColor(settingsStyle.Value.normal.textColor));
 
         foreach (KeyValuePair<string, bool> settingsBool in settingsBools)
@@ -129,64 +133,97 @@ internal class KSPScienceSettings
             Vector4 tmpVector4 = new Vector4(settingsRect.Value.xMin, settingsRect.Value.yMin, settingsRect.Value.width, settingsRect.Value.height);
             cn.AddValue(settingsRect.Key, ConfigNode.WriteVector(tmpVector4));
         }
+
+        foreach (KeyValuePair<string, Color> settingsColor in settingsColors)
+            cn.AddValue(settingsColor.Key, ConfigNode.WriteColor(settingsColor.Value));
+
+        foreach (KeyValuePair<string, string> settingsString in settingsStrings)
+            cn.AddValue(settingsString.Key, settingsString.Value);
+
         cn.Save(filename);
     }
 
     private void LoadSettings()
     {
-        settingsStyles.Clear();
+        settingsStylesTextColor.Clear();
         settingsBools.Clear();
         settingsRects.Clear();
+        settingsColors.Clear();
 
         GUIStyle style;
 
         style = new GUIStyle();
         style.normal.textColor = Color.white;
         style.wordWrap = false;
-        settingsStyles.Add("LibraryDoneExperiments", style);
+        settingsStylesTextColor.Add("LibraryDoneExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.red;
         style.wordWrap = false;
-        settingsStyles.Add("LibraryNewExperiments", style);
+        settingsStylesTextColor.Add("LibraryNewExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.red;
         style.wordWrap = false;
-        settingsStyles.Add("MonitorKSCExperiments", style);
+        settingsStylesTextColor.Add("MonitorKSCExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.green;
         style.wordWrap = false;
-        settingsStyles.Add("MonitorNewExperiments", style);
+        settingsStylesTextColor.Add("MonitorNewExperiments", style);
         style = new GUIStyle();
         style.normal.textColor = Color.yellow;
         style.wordWrap = false;
-        settingsStyles.Add("MonitorOnShipExperiments", style);
+        settingsStylesTextColor.Add("MonitorOnShipExperiments", style);
 
         settingsBools.Add("ShowDeployButton", false);
         settingsBools.Add("ShowOnlyKnownBiomes", false);
         settingsBools.Add("ShowOnlyKnownExperiments", false);
 
-        settingsIntegers.Add("Skin", 0);
+        //settingsIntegers.Add("Skin", 0);
+
+        settingsColors.Add("WindowBGColor", new Color());
+
+        settingsStrings.Add("Skin", "OrbitMapSkin");
 
         cn = ConfigNode.Load(filename) ?? new ConfigNode();
 
-        ReadTextColorFromConfig("LibraryDoneExperiments", settingsStyles["LibraryDoneExperiments"]);
-        ReadTextColorFromConfig("LibraryNewExperiments", settingsStyles["LibraryNewExperiments"]);
-        ReadTextColorFromConfig("MonitorKSCExperiments", settingsStyles["MonitorKSCExperiments"]);
-        ReadTextColorFromConfig("MonitorNewExperiments", settingsStyles["MonitorNewExperiments"]);
-        ReadTextColorFromConfig("MonitorOnShipExperiments", settingsStyles["MonitorOnShipExperiments"]);
+        ReadTextColorFromConfig("LibraryDoneExperiments", settingsStylesTextColor["LibraryDoneExperiments"]);
+        ReadTextColorFromConfig("LibraryNewExperiments", settingsStylesTextColor["LibraryNewExperiments"]);
+        ReadTextColorFromConfig("MonitorKSCExperiments", settingsStylesTextColor["MonitorKSCExperiments"]);
+        ReadTextColorFromConfig("MonitorNewExperiments", settingsStylesTextColor["MonitorNewExperiments"]);
+        ReadTextColorFromConfig("MonitorOnShipExperiments", settingsStylesTextColor["MonitorOnShipExperiments"]);
 
         settingsBools["ShowDeployButton"] = ReadBoolFromConfig("ShowDeployButton", settingsBools["ShowDeployButton"]);
         settingsBools["ShowOnlyKnownBiomes"] = ReadBoolFromConfig("ShowOnlyKnownBiomes", settingsBools["ShowOnlyKnownBiomes"]);
         settingsBools["ShowOnlyKnownExperiments"] = ReadBoolFromConfig("ShowOnlyKnownExperiments", settingsBools["ShowOnlyKnownExperiments"]);
 
-        settingsIntegers["Skin"] = ReadIntegerFromConfig("Skin", settingsIntegers["Skin"]);
+        //settingsIntegers["Skin"] = ReadIntegerFromConfig("Skin", settingsIntegers["Skin"]);
+        settingsStrings["Skin"] = ReadStringFromConfig("Skin", settingsStrings["Skin"]);
+
+        settingsColors["WindowBGColor"] = ReadColorFromConfig("WindowBGColor", settingsColors["WindowBGColor"]);
 
         _setRectSetting("LibraryRect", ReadRectFromConfig("LibraryRect", new Rect(5, 20, Screen.width - 10, Screen.height - 80)));
         _setRectSetting("MonitorRect", ReadRectFromConfig("MonitorRect", new Rect((Screen.width - 600)/2, (Screen.height - 200)/2, 600, 200)));
-        _setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 440)/2, 400, 440)));
+        //_setRectSetting("SettingsRect", ReadRectFromConfig("SettingsRect", new Rect((Screen.width - 400)/2, (Screen.height - 440)/2, 400, 440)));
 
-        //MonoBehaviour.print("after load settings. styles: " + settingsStyles.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
+
+        //MonoBehaviour.print("after load settings. styles: " + settingsStylesTextColor.Count + " bools: " + settingsBools.Count + " rects: " + settingsRects.Count);
     }
+
+    public static Texture2D GetBGTexture(bool force = false)
+    {
+        if (settings.windowBgColorTexture2D != null && !force) return settings.windowBgColorTexture2D;
+        settings.windowBgColorTexture2D = new Texture2D(1, 1);
+        Color color = getColorSetting("WindowBGColor");
+        settings.windowBgColorTexture2D.SetPixel(0, 0, color);
+        settings.windowBgColorTexture2D.Apply();
+        return settings.windowBgColorTexture2D;
+    }
+
+    private Color ReadColorFromConfig(string id, Color defaultColor)
+    {
+        if (!cn.HasValue(id)) return defaultColor;
+        return ConfigNode.ParseColor(cn.GetValue(id));
+    }
+
 
     private bool ReadTextColorFromConfig(string id, GUIStyle style)
     {
@@ -208,6 +245,12 @@ internal class KSPScienceSettings
         return bool.Parse(cn.GetValue(id));
     }
 
+    private string ReadStringFromConfig(string id, string default_value)
+    {
+        if (!cn.HasValue(id)) return default_value;
+        return cn.GetValue(id);
+    }
+
     private int ReadIntegerFromConfig(string id, int default_value)
     {
         if (!cn.HasValue(id)) return default_value;
@@ -219,7 +262,8 @@ internal class KSPScienceSettings
 //         if (null == settings)
 //             settings = new KSPScienceSettings();
         settings.shown = true;
-        settings.windowPosition = getRectSetting("SettingsRect");
+        settings.windowPosition = new Rect((Screen.width - 400)/2, (Screen.height - 460)/2, 400, 460); 
+        //getRectSetting("SettingsRect");
         RenderingManager.AddToPostDrawQueue(3, settings.OnDraw);
     }
 
@@ -259,7 +303,7 @@ internal class KSPScienceSettings
         //MonoBehaviour.print("Settings_OnDraw");
         if (!settings.shown) return;
         windowPosition = GUI.Window(5, windowPosition, OnWindow, TextReplacer.GetReplaceForString("Science Settings"), windowStyle);
-        setRectSetting("SettingsRect", windowPosition);
+        //setRectSetting("SettingsRect", windowPosition);
     }
 
     private void OnWindow(int id)
@@ -281,8 +325,10 @@ internal class KSPScienceSettings
         GUILayout.Label(TextReplacer.GetReplaceForString("Skin:"));
 
         int selectedItemIndex = comboBoxControl.GetSelectedItemIndex();
-        selectedItemIndex = comboBoxControl.List(comboBoxList[selectedItemIndex].text, comboBoxList, listStyle, settings.settingsIntegers["Skin"]);
-        settings.settingsIntegers["Skin"] = selectedItemIndex;
+
+
+        selectedItemIndex = comboBoxControl.List(comboBoxList[selectedItemIndex], comboBoxList, listStyle, Array.IndexOf(comboBoxList, settings.settingsStrings["Skin"]));
+        settings.settingsStrings["Skin"] = comboBoxList[selectedItemIndex];
 
 /*
         if (GUILayout.Button("Save to File"))
@@ -315,7 +361,7 @@ internal class KSPScienceSettings
     private void AddHorizontalColorSlider(string id, string name)
     {
         GUILayout.BeginHorizontal();
-        GUIStyle style = settingsStyles[id];
+        GUIStyle style = settingsStylesTextColor[id];
 
         GUILayout.Label(name, new[] {GUILayout.MaxWidth(210), GUILayout.MinWidth(210)});
         float r = style.normal.textColor.r*255;
@@ -333,7 +379,27 @@ internal class KSPScienceSettings
 
     public static GUISkin getSkin()
     {
-        int sel = settings.settingsIntegers["Skin"];
-        return AssetBase.GetGUISkin(settings.comboBoxList[sel].text);
+        int sel;
+        sel = Array.IndexOf(settings.comboBoxList, settings.settingsStrings["Skin"]);
+        if (sel < 0) sel = 0;
+        return AssetBase.GetGUISkin(settings.comboBoxList[sel]);
+    }
+
+    public static void ChangeSkin(GUISkin skin)
+    {
+        skin.label.margin = OrbitMapSkin.label.margin;
+        skin.label.padding = OrbitMapSkin.label.padding;
+
+        skin.button.margin = OrbitMapSkin.button.margin;
+        skin.button.padding = OrbitMapSkin.button.padding;
+
+        skin.toggle.margin = OrbitMapSkin.toggle.margin;
+        skin.toggle.padding = OrbitMapSkin.toggle.padding;
+
+        skin.window.margin = OrbitMapSkin.window.margin;
+        skin.window.padding = OrbitMapSkin.window.padding;
+
+        skin.scrollView.margin = OrbitMapSkin.scrollView.margin;
+        skin.scrollView.padding = OrbitMapSkin.scrollView.padding;
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -21,6 +20,7 @@ public class KSPScienceLibrary : MonoBehaviour
     private CelestialBody[] bodies;
     //private List<LibraryExperiment> filtered;
     private bool lastdrawWindow;
+    private LibraryView libraryView;
     //private List<LibraryExperiment> libraryExperiments = new List<LibraryExperiment>();
     private bool resizingWindow;
     private Vector2 scrollBiomes;
@@ -29,7 +29,6 @@ public class KSPScienceLibrary : MonoBehaviour
     private Vector2 scrollExperiments;
     private Vector2 scrollPlanets;
 
-    private LibraryView libraryView;
     private CelestialBody sun;
 
     public static bool DrawWindow
@@ -132,10 +131,13 @@ public class KSPScienceLibrary : MonoBehaviour
     private void OnWindow(int windowID)
     {
         GUI.skin = KSPScienceSettings.getSkin();
+        KSPScienceSettings.ChangeSkin(GUI.skin);
+
+
         bool filterChanged = false;
         GUILayout.BeginArea(new Rect(1, 21, windowPosition.width - 22, windowPosition.height - 42));
-
         GUILayout.BeginHorizontal();
+
         // start planets
         GUILayout.BeginVertical(GUILayout.MaxWidth(105), GUILayout.MinWidth(105));
         scrollPlanets = GUILayout.BeginScrollView(scrollPlanets);
@@ -156,7 +158,11 @@ public class KSPScienceLibrary : MonoBehaviour
                 GUILayout.BeginHorizontal();
                 GUILayout.Space(20);
             }
-            pressedP = GUILayout.Toggle(pressedPLast, body.name, "Button");
+
+            string threshold = Environment.NewLine + "InSpaceLow - " + string.Format("{0:N0}", (Math.Round(body.scienceValues.spaceAltitudeThreshold) / 1000)) + "km - InSpaceHigh" + Environment.NewLine;
+            if (body.atmosphere)
+                threshold += "FlyingLow - " + string.Format("{0:N0}", (Math.Round(body.scienceValues.flyingAltitudeThreshold) / 1000)) + "km - FlyingHigh" + Environment.NewLine;
+            pressedP = GUILayout.Toggle(pressedPLast, new GUIContent(body.name, threshold), "Button");
             if (pressedP && !pressedPLast)
             {
                 pressedCelestialBodies.Add(body);
@@ -191,7 +197,10 @@ public class KSPScienceLibrary : MonoBehaviour
             bool pressedP;
             bool pressedPLast = pressedScienceExperiments.Contains(experiment);
 
-            pressedP = GUILayout.Toggle(pressedPLast, TextReplacer.GetReplaceForString(experiment.id), "Button");
+            string tooltip = "";
+            if (LibraryUtils.GetExperimentToPartRelation().ContainsKey(experiment.id))
+                tooltip = Environment.NewLine + LibraryUtils.GetExperimentToPartRelation()[experiment.id];
+            pressedP = GUILayout.Toggle(pressedPLast, new GUIContent(TextReplacer.GetReplaceForString(experiment.id), tooltip), "Button");
             if (pressedP && !pressedPLast)
             {
                 pressedScienceExperiments.Add(experiment);
@@ -203,12 +212,12 @@ public class KSPScienceLibrary : MonoBehaviour
                 filterChanged = true;
             }
         }
-
-
         GUILayout.EndScrollView();
         GUILayout.EndVertical();
         // end experiments
+
         GUILayout.BeginVertical(GUILayout.MaxWidth(windowPosition.width - 280), GUILayout.MinWidth(windowPosition.width - 280));
+
         // start biomes
         GUILayout.BeginHorizontal(GUILayout.MaxHeight(45), GUILayout.MinHeight(45));
         scrollBiomes = GUILayout.BeginScrollView(scrollBiomes);
@@ -218,8 +227,6 @@ public class KSPScienceLibrary : MonoBehaviour
             pressedBiomes.Clear();
             filterChanged = true;
         }
-
-
         if (filterChanged || biomesList == null)
             biomesList = LibraryUtils.GetBiomesForPlanets(pressedCelestialBodies.Count == 0 ? (IEnumerable<CelestialBody>) bodies : pressedCelestialBodies);
         foreach (string biome in biomesList)
@@ -227,7 +234,7 @@ public class KSPScienceLibrary : MonoBehaviour
             bool pressedP;
             bool pressedPLast = pressedBiomes.Contains(biome);
 
-            pressedP = GUILayout.Toggle(pressedPLast, biome, "Button");
+            pressedP = GUILayout.Toggle(pressedPLast, (biome == "" ? "NoBiome" : biome), "Button");
             if (pressedP && !pressedPLast)
             {
                 pressedBiomes.Add(biome);
@@ -243,13 +250,14 @@ public class KSPScienceLibrary : MonoBehaviour
         GUILayout.EndScrollView();
         GUILayout.EndHorizontal();
         // end biomes
+
         // start content page
         GUILayout.BeginHorizontal();
         GUILayout.BeginVertical();
         scrollContentPage = GUILayout.BeginScrollView(scrollContentPage);
         if (filterChanged || libraryView == null)
             libraryView = LibraryUtils.GetLibraryView(pressedCelestialBodies, pressedBiomes, pressedScienceExperiments);
-        float width = (windowPosition.width - 280) / 7;
+        float width = (windowPosition.width - 280)/7;
         foreach (LibraryRow row in libraryView.rows)
         {
             row.style.fixedWidth = width;
@@ -261,12 +269,11 @@ public class KSPScienceLibrary : MonoBehaviour
             }
             GUILayout.EndHorizontal();
         }
-
-
         GUILayout.EndScrollView();
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
         // stop content page
+
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
 
@@ -277,6 +284,19 @@ public class KSPScienceLibrary : MonoBehaviour
             Hide();
         if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
             resizingWindow = true;
-        GUI.DragWindow(new Rect(0, 0, 10000, 20));
+        if (GUI.tooltip != "")
+        {
+            Vector3 mousePos = Input.mousePosition;
+            mousePos = GUIUtility.ScreenToGUIPoint(mousePos);
+            GUIStyle st = new GUIStyle(GUI.skin.button);
+            st.stretchHeight = true;
+            st.stretchWidth = true;
+            st.fixedWidth = 0;
+            st.fixedHeight = 0;
+            Vector2 size = st.CalcSize(new GUIContent(GUI.tooltip));
+            GUI.Label(new Rect((windowPosition.width/2 > mousePos.x) ? (mousePos.x + windowPosition.width/20) : (mousePos.x - windowPosition.width/20 - size.x), windowPosition.height - mousePos.y + ((mousePos.y - size.y < 0) ? (mousePos.y - size.y) : 0), size.x, size.y), GUI.tooltip, st);
+        }
+        GUI.DragWindow(new Rect(0, 0, 10000, 25));
+        
     }
 }
