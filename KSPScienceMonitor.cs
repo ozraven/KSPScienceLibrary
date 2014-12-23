@@ -2,212 +2,214 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[KSPAddon(KSPAddon.Startup.Flight, false)]
-public class KSPScienceMonitor : MonoBehaviour
+namespace KSPScienceLibrary
 {
-    public static KSPScienceMonitorButton toolbarButton;
-    private static Rect windowPosition;
-    private static GUIStyle windowStyle;
-
-    public static bool drawWindow = false;
-
-    // List of science on this ship
-    private readonly List<ExperimentView> OnShip = new List<ExperimentView>();
-    // List of science to show on window
-    private readonly List<ExperimentView> Output = new List<ExperimentView>();
-
-    //private readonly Dictionary<string, bool[]> idsList = new Dictionary<string, bool[]>();
-    // whether it should pause game at new science
-    // private bool autoPauseOnNew;
-
-
-    // "last" to compare with "now". For optimizations
-    private string lastBiome;
-    private ExperimentSituations lastExperimentSituation;
-    private CelestialBody lastMainBody;
-
-    // Optimizations
-    private float lateUpdateTimer;
-    private int lateUpdateTimerCounter;
-
-    private bool resizingWindow;
-    private Vector2 scrollVector2;
-
-    public void Awake()
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    public class KSPScienceMonitor : MonoBehaviour
     {
-        RenderingManager.AddToPostDrawQueue(2, OnDraw);
-    }
+        public static KSPScienceMonitorButton toolbarButton;
+        private static Rect windowPosition;
+        private static GUIStyle windowStyle;
 
-    public void Start()
-    {
-        windowStyle = new GUIStyle(HighLogic.Skin.window);
-        windowStyle.stretchHeight = true;
-        windowStyle.stretchWidth = true;
+        public static bool drawWindow = false;
 
-        windowPosition = KSPScienceSettings.getRectSetting("MonitorRect");
-    }
+        // List of science on this ship
+        private readonly List<ExperimentView> OnShip = new List<ExperimentView>();
+        // List of science to show on window
+        private readonly List<ExperimentView> Output = new List<ExperimentView>();
 
-    public void Update()
-    {
-        if (Input.GetMouseButtonUp(0))
-            resizingWindow = false;
-        if (resizingWindow)
+        //private readonly Dictionary<string, bool[]> idsList = new Dictionary<string, bool[]>();
+        // whether it should pause game at new science
+        // private bool autoPauseOnNew;
+
+
+        // "last" to compare with "now". For optimizations
+        private string lastBiome;
+        private ExperimentSituations lastExperimentSituation;
+        private CelestialBody lastMainBody;
+
+        // Optimizations
+        private float lateUpdateTimer;
+        private int lateUpdateTimerCounter;
+
+        private bool resizingWindow;
+        private Vector2 scrollVector2;
+
+        public void Awake()
         {
-            windowPosition.width = Input.mousePosition.x - windowPosition.x + 10;
-            windowPosition.height = (Screen.height - Input.mousePosition.y) - windowPosition.y + 10;
+            RenderingManager.AddToPostDrawQueue(2, OnDraw);
         }
-        // using "while" for possibility to "break". So we dont have to use GOTO. using timer to skip frames.
-        while (drawWindow && (lateUpdateTimer < Time.time || lateUpdateTimerCounter > 3))
+
+        public void Start()
         {
-            lateUpdateTimer = Time.time + 1;
+            windowStyle = new GUIStyle(HighLogic.Skin.window);
+            windowStyle.stretchHeight = true;
+            windowStyle.stretchWidth = true;
 
-            ExperimentSituations experimentSituation = ScienceUtil.GetExperimentSituation(FlightGlobals.ActiveVessel);
-            CelestialBody mainbody = FlightGlobals.ActiveVessel.mainBody;
-            string biome;
-            if (FlightGlobals.ActiveVessel.landedAt != string.Empty)
-                biome = FlightGlobals.ActiveVessel.landedAt;
-            else
-                biome = ScienceUtil.GetExperimentBiome(FlightGlobals.ActiveVessel.mainBody, FlightGlobals.ActiveVessel.latitude, FlightGlobals.ActiveVessel.longitude);
+            windowPosition = KSPScienceSettings.getRectSetting("MonitorRect");
+        }
 
-            if (mainbody == lastMainBody && biome == lastBiome && lastExperimentSituation == experimentSituation && lateUpdateTimerCounter <= 3)
+        public void Update()
+        {
+            if(Input.GetMouseButtonUp(0))
+                resizingWindow = false;
+            if(resizingWindow)
             {
-                lateUpdateTimer = 0;
-                lateUpdateTimerCounter++;
-                break;
+                windowPosition.width = Input.mousePosition.x - windowPosition.x + 10;
+                windowPosition.height = (Screen.height - Input.mousePosition.y) - windowPosition.y + 10;
             }
-            lateUpdateTimerCounter = 0;
-            lastBiome = biome;
-            lastMainBody = mainbody;
-            lastExperimentSituation = experimentSituation;
-
-            Output.Clear();
-            OnShip.Clear();
-
-
-            //List<ScienceExperiment> PossibleExperiments = new List<ScienceExperiment>();
-
-            //Search for all Science Experiment Modules on vessel, Check experiment available and add in "Output" and "OnShip"
-            foreach (ModuleScienceExperiment moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
+            // using "while" for possibility to "break". So we dont have to use GOTO. using timer to skip frames.
+            while(drawWindow && (lateUpdateTimer < Time.time || lateUpdateTimerCounter > 3))
             {
-                string firstExperimentId = moduleScienceExperiment.experimentID;
-                ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
-                bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
-                if (available)
+                lateUpdateTimer = Time.time + 1;
+
+                ExperimentSituations experimentSituation = ScienceUtil.GetExperimentSituation(FlightGlobals.ActiveVessel);
+                CelestialBody mainbody = FlightGlobals.ActiveVessel.mainBody;
+                string biome;
+                if(!string.IsNullOrEmpty(FlightGlobals.ActiveVessel.landedAt))
+                    biome = FlightGlobals.ActiveVessel.landedAt;
+                else
+                    biome = ScienceUtil.GetExperimentBiome(FlightGlobals.ActiveVessel.mainBody, FlightGlobals.ActiveVessel.latitude, FlightGlobals.ActiveVessel.longitude);
+
+                if(mainbody == lastMainBody && biome == lastBiome && lastExperimentSituation == experimentSituation && lateUpdateTimerCounter <= 3)
                 {
-                    if (moduleScienceExperiment.Deployed)
+                    lateUpdateTimer = 0;
+                    lateUpdateTimerCounter++;
+                    break;
+                }
+                lateUpdateTimerCounter = 0;
+                lastBiome = biome;
+                lastMainBody = mainbody;
+                lastExperimentSituation = experimentSituation;
+
+                Output.Clear();
+                OnShip.Clear();
+
+
+                //List<ScienceExperiment> PossibleExperiments = new List<ScienceExperiment>();
+
+                //Search for all Science Experiment Modules on vessel, Check experiment available and add in "Output" and "OnShip"
+                foreach(ModuleScienceExperiment moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
+                {
+                    string firstExperimentId = moduleScienceExperiment.experimentID;
+                    ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                    bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                    if(available)
                     {
-                        foreach (ScienceData scienceData in moduleScienceExperiment.GetData())
+                        if(moduleScienceExperiment.Deployed)
                         {
-                            ExperimentView experimentView = new ExperimentView(scienceData);
-                            if (!Output.Contains(experimentView))
+                            foreach(ScienceData scienceData in moduleScienceExperiment.GetData())
+                            {
+                                ExperimentView experimentView = new ExperimentView(scienceData);
+                                if(!Output.Contains(experimentView))
+                                    Output.Add(experimentView);
+                                OnShip.Add(experimentView);
+                            }
+                        }
+                        {
+                            ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                            ExperimentView experimentView = new ExperimentView(scienceSubject);
+                            if(!Output.Contains(experimentView))
                                 Output.Add(experimentView);
-                            OnShip.Add(experimentView);
                         }
                     }
-                    {
-                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
-                        ExperimentView experimentView = new ExperimentView(scienceSubject);
-                        if (!Output.Contains(experimentView))
-                            Output.Add(experimentView);
-                    }
-                }
-            }
-
-            // Check for Kerbals on board. That means we can also use "evaReport", "surfaceSample", "asteroidSample" in EVA.
-            if (FlightGlobals.ActiveVessel.GetCrewCount() > 0)
-            {
-                {
-                    string firstExperimentId = "evaReport";
-                    ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
-                    bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
-                    if (available)
-                    {
-                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
-                        ExperimentView experimentView = new ExperimentView(scienceSubject);
-                        if (!Output.Contains(experimentView))
-                            Output.Add(experimentView);
-                    }
-                }
-                {
-                    string firstExperimentId = "surfaceSample";
-                    ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
-                    bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
-                    if (available)
-                    {
-                        ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
-                        ExperimentView experimentView = new ExperimentView(scienceSubject);
-                        if (!Output.Contains(experimentView))
-                            Output.Add(experimentView);
-                    }
                 }
 
-                // Find asteroid that could be used for science. (I hope it will not be too many asteroids, because of linear complexity of this code)
-                ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
-                foreach (ModuleAsteroid asteroid in asteroids)
+                // Check for Kerbals on board. That means we can also use "evaReport", "surfaceSample", "asteroidSample" in EVA.
+                if(FlightGlobals.ActiveVessel.GetCrewCount() > 0)
                 {
-                    Vector3 destination3 = asteroid.gameObject.transform.position - FlightGlobals.ActiveVessel.gameObject.transform.position;
-                    float unfocusedRange = asteroid.Events["TakeSampleEVAEvent"].unfocusedRange;
-                    unfocusedRange *= unfocusedRange;
-                    if (destination3.sqrMagnitude < unfocusedRange)
                     {
-                        string firstExperimentId = "asteroidSample";
+                        string firstExperimentId = "evaReport";
                         ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
                         bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
-                        if (available)
+                        if(available)
                         {
-                            string asteroidname = asteroid.part.partInfo.name + asteroid.part.flightID;
-                            ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                            ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
                             ExperimentView experimentView = new ExperimentView(scienceSubject);
-                            if (!Output.Contains(experimentView))
+                            if(!Output.Contains(experimentView))
                                 Output.Add(experimentView);
                         }
                     }
+                    {
+                        string firstExperimentId = "surfaceSample";
+                        ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                        bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                        if(available)
+                        {
+                            ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                            ExperimentView experimentView = new ExperimentView(scienceSubject);
+                            if(!Output.Contains(experimentView))
+                                Output.Add(experimentView);
+                        }
+                    }
+
+                    // Find asteroid that could be used for science. (I hope it will not be too many asteroids, because of linear complexity of this code)
+                    ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
+                    foreach(ModuleAsteroid asteroid in asteroids)
+                    {
+                        Vector3 destination3 = asteroid.gameObject.transform.position - FlightGlobals.ActiveVessel.gameObject.transform.position;
+                        float unfocusedRange = asteroid.Events["TakeSampleEVAEvent"].unfocusedRange;
+                        unfocusedRange *= unfocusedRange;
+                        if(destination3.sqrMagnitude < unfocusedRange)
+                        {
+                            string firstExperimentId = "asteroidSample";
+                            ScienceExperiment scienceExperiment = ResearchAndDevelopment.GetExperiment(firstExperimentId);
+                            bool available = scienceExperiment.IsAvailableWhile(experimentSituation, mainbody);
+                            if(available)
+                            {
+                                string asteroidname = asteroid.part.partInfo.name + asteroid.part.flightID;
+                                ScienceSubject scienceSubject = LibraryUtils.GetExperimentSubject(scienceExperiment, experimentSituation, asteroidname, "", mainbody, scienceExperiment.BiomeIsRelevantWhile(experimentSituation) ? biome : "");
+                                ExperimentView experimentView = new ExperimentView(scienceSubject);
+                                if(!Output.Contains(experimentView))
+                                    Output.Add(experimentView);
+                            }
+                        }
+                    }
                 }
-            }
-            //Search for all Science Containers on vessel and write all found experiments into OnShip list
-            foreach (ModuleScienceContainer moduleScienceContainer in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>())
-            {
-                foreach (ScienceData scienceData in moduleScienceContainer.GetData())
+                //Search for all Science Containers on vessel and write all found experiments into OnShip list
+                foreach(ModuleScienceContainer moduleScienceContainer in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>())
                 {
-                    ExperimentView experimentView = new ExperimentView(scienceData);
-                    //if (!Output.Contains(experimentView))
-                    Output.Add(experimentView);
-                    OnShip.Add(experimentView);
+                    foreach(ScienceData scienceData in moduleScienceContainer.GetData())
+                    {
+                        ExperimentView experimentView = new ExperimentView(scienceData);
+                        //if (!Output.Contains(experimentView))
+                        Output.Add(experimentView);
+                        OnShip.Add(experimentView);
+                    }
                 }
+
+                Output.Sort();
+                break;
             }
-
-            Output.Sort();
-            break;
         }
-    }
 
 
-    private void OnDraw()
-    {
-        if (toolbarButton != null)
-            toolbarButton.UpdateIcon(drawWindow);
-        if (drawWindow)
+        private void OnDraw()
         {
-            windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
-            KSPScienceSettings.setRectSetting("MonitorRect", windowPosition);
-        }
-    }
-
-    private void OnWindow(int windowID)
-    {
-        GUI.skin = KSPScienceSettings.getSkin();
-        //         GUILayout.BeginHorizontal();
-        //         autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
-        //         GUILayout.EndHorizontal();
-        scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
-
-
-        GUILayout.BeginHorizontal();
-        for (int i = 0; i <= 6; i++)
-        {
-            GUILayout.BeginVertical();
-            switch (i)
+            if(toolbarButton != null)
+                toolbarButton.UpdateIcon(drawWindow);
+            if(drawWindow)
             {
+                windowPosition = GUI.Window(1234, windowPosition, OnWindow, "Science Monitor", windowStyle);
+                KSPScienceSettings.setRectSetting("MonitorRect", windowPosition);
+            }
+        }
+
+        private void OnWindow(int windowID)
+        {
+            GUI.skin = KSPScienceSettings.getSkin();
+            //         GUILayout.BeginHorizontal();
+            //         autoPauseOnNew = GUILayout.Toggle(autoPauseOnNew, "Auto Pause on new Science: " + autoPauseOnNew);
+            //         GUILayout.EndHorizontal();
+            scrollVector2 = GUILayout.BeginScrollView(scrollVector2);
+
+
+            GUILayout.BeginHorizontal();
+            for(int i = 0; i <= 6; i++)
+            {
+                GUILayout.BeginVertical();
+                switch(i)
+                {
                 case 0:
                     GUILayout.Label("ID");
                     break;
@@ -227,54 +229,58 @@ public class KSPScienceMonitor : MonoBehaviour
                     GUILayout.Label("NextExp");
                     break;
                 case 6:
-                    if (KSPScienceSettings.getBoolSetting("ShowDeployButton"))
+                    if(KSPScienceSettings.getBoolSetting("ShowDeployButton"))
                         GUILayout.Label("Deploy");
                     break;
-            }
-            foreach (ExperimentView experimentView in Output)
-            {
-                GUIStyle style = new GUIStyle();
-                if (experimentView.OnShip)
-                    style = KSPScienceSettings.getStyleSetting("MonitorOnShipExperiments");
-                else if (experimentView.EarnedScience > 0)
-                    style = KSPScienceSettings.getStyleSetting("MonitorKSCExperiments");
-                else
-                {
-                    style = KSPScienceSettings.getStyleSetting("MonitorNewExperiments");
-                    if (OnShip.Exists(view => view.FullExperimentId == experimentView.FullExperimentId))
-                        continue;
                 }
-                switch (i)
+                foreach(ExperimentView experimentView in Output)
                 {
+                    GUIStyle style = new GUIStyle();
+                    if(experimentView.OnShip)
+                        style = KSPScienceSettings.getStyleSetting("MonitorOnShipExperiments");
+                    else if(experimentView.EarnedScience > 0)
+                        style = KSPScienceSettings.getStyleSetting("MonitorKSCExperiments");
+                    else
+                    {
+                        style = KSPScienceSettings.getStyleSetting("MonitorNewExperiments");
+                        if(OnShip.Exists(view => view.FullExperimentId == experimentView.FullExperimentId))
+                            continue;
+                    }
+                    switch(i)
+                    {
                     case 0:
                         GUILayout.Label(experimentView.FullExperimentId, style);
                         break;
                     case 1:
-                    {
-                        string strout = Math.Round(experimentView.EarnedScience, 1).ToString();
-                        if (strout == "0") strout = "-";
-                        GUILayout.Label(strout, style);
-                    }
+                        {
+                            string strout = Math.Round(experimentView.EarnedScience, 1).ToString();
+                            if(strout == "0")
+                                strout = "-";
+                            GUILayout.Label(strout, style);
+                        }
                         break;
                     case 2:
-                    {
-                        string strout = Math.Round(experimentView.FullScience, 1).ToString();
-                        if (strout == "0") strout = "-";
-                        GUILayout.Label(strout, style);
-                    }
+                        {
+                            string strout = Math.Round(experimentView.FullScience, 1).ToString();
+                            if(strout == "0")
+                                strout = "-";
+                            GUILayout.Label(strout, style);
+                        }
                         break;
                     case 3:
-                        double percent = (experimentView.FullScience - experimentView.EarnedScience)/experimentView.FullScience*100;
-                        if (experimentView.FullScience == 0)
+                        double percent = (experimentView.FullScience - experimentView.EarnedScience) / experimentView.FullScience * 100;
+                        if(experimentView.FullScience == 0)
                         {
                             GUILayout.Label("-", style);
-                        } else if (percent >= 30)
+                        }
+                        else if(percent >= 30)
                         {
                             GUIStyle tmpstyle = style;
                             style = KSPScienceSettings.getStyleSetting("MonitorNewExperiments");
                             GUILayout.Label(Math.Round(percent) + "%", style);
                             style = tmpstyle;
-                        } else
+                        }
+                        else
                         {
                             GUILayout.Label(Math.Round(percent) + "%", style);
                         }
@@ -283,92 +289,96 @@ public class KSPScienceMonitor : MonoBehaviour
                         GUILayout.Label(experimentView.OnShip ? "\u221a" : " ", style);
                         break;
                     case 5:
-                    {
-                        string strout = Math.Round(experimentView.NextExperimentScience, 1).ToString();
-                        if (strout == "0") strout = "-";
-                        GUILayout.Label(strout, style);
-                    }
+                        {
+                            string strout = Math.Round(experimentView.NextExperimentScience, 1).ToString();
+                            if(strout == "0")
+                                strout = "-";
+                            GUILayout.Label(strout, style);
+                        }
                         break;
                     case 6:
-                    {
-                        if (KSPScienceSettings.getBoolSetting("ShowDeployButton"))
                         {
-                            GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
-                            buttonStyle.margin = new RectOffset(0, 0, 0, 0);
-                            buttonStyle.normal.textColor = style.normal.textColor;
-                            if (experimentView.FullExperimentId.Split('@')[0] == "asteroidSample")
+                            if(KSPScienceSettings.getBoolSetting("ShowDeployButton"))
                             {
-                                //ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
-                                //ModuleScienceContainer collector = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>().First<ModuleScienceContainer>();
-                                //will be added in next version.
-                                GUILayout.Button("------", buttonStyle, GUILayout.Height(15));
-                            } else
-                            {
-                                bool foundFreeSpaceForExperiment = false;
-                                ModuleScienceExperiment moduleScienceExperiment = null;
-                                foreach (ModuleScienceExperiment _moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
+                                GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
+                                buttonStyle.margin = new RectOffset(0, 0, 0, 0);
+                                buttonStyle.normal.textColor = style.normal.textColor;
+                                if(experimentView.FullExperimentId.Split('@')[0] == "asteroidSample")
                                 {
-                                    if (_moduleScienceExperiment.experimentID == experimentView.FullExperimentId.Split('@')[0])
+                                    //ModuleAsteroid[] asteroids = FindObjectsOfType<ModuleAsteroid>();
+                                    //ModuleScienceContainer collector = FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceContainer>().First<ModuleScienceContainer>();
+                                    //will be added in next version.
+                                    GUILayout.Button("------", buttonStyle, GUILayout.Height(15));
+                                }
+                                else
+                                {
+                                    bool foundFreeSpaceForExperiment = false;
+                                    ModuleScienceExperiment moduleScienceExperiment = null;
+                                    foreach(ModuleScienceExperiment _moduleScienceExperiment in FlightGlobals.ActiveVessel.FindPartModulesImplementing<ModuleScienceExperiment>())
                                     {
-                                        if (!_moduleScienceExperiment.Deployed && !_moduleScienceExperiment.Inoperable && _moduleScienceExperiment.GetScienceCount() == 0)
+                                        if(_moduleScienceExperiment.experimentID == experimentView.FullExperimentId.Split('@')[0])
                                         {
-                                            foundFreeSpaceForExperiment = true;
-                                            moduleScienceExperiment = _moduleScienceExperiment;
-                                            break;
+                                            if(!_moduleScienceExperiment.Deployed && !_moduleScienceExperiment.Inoperable && _moduleScienceExperiment.GetScienceCount() == 0)
+                                            {
+                                                foundFreeSpaceForExperiment = true;
+                                                moduleScienceExperiment = _moduleScienceExperiment;
+                                                break;
+                                            }
                                         }
                                     }
+                                    if(foundFreeSpaceForExperiment)
+                                    {
+                                        if(GUILayout.Button("deploy", buttonStyle, GUILayout.Height(15)))
+                                            moduleScienceExperiment.DeployExperiment();
+                                    }
+                                    else
+                                        GUILayout.Button("------", buttonStyle, GUILayout.Height(15));
                                 }
-                                if (foundFreeSpaceForExperiment)
-                                {
-                                    if (GUILayout.Button("deploy", buttonStyle, GUILayout.Height(15)))
-                                        moduleScienceExperiment.DeployExperiment();
-                                } else
-                                    GUILayout.Button("------", buttonStyle, GUILayout.Height(15));
                             }
                         }
-                    }
                         break;
+                    }
+                    //                 if (autoPauseOnNew && style.normal.textColor == Color.green)
+                    //                 {
+                    //                     //activate pause
+                    //                     TimeWarp.SetRate(0, true);
+                    //                     FlightDriver.SetPause(true);
+                    //                 }
                 }
-                //                 if (autoPauseOnNew && style.normal.textColor == Color.green)
-                //                 {
-                //                     //activate pause
-                //                     TimeWarp.SetRate(0, true);
-                //                     FlightDriver.SetPause(true);
-                //                 }
+                GUILayout.EndVertical();
             }
-            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+
+            GUILayout.EndScrollView();
+            //GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Space(20);
+            GUILayout.EndHorizontal();
+            GUILayout.Space(20);
+            if(GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
+                KSPScienceSettings.Toggle();
+            if(GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
+                Hide();
+            if(GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
+                resizingWindow = true;
+            GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }
-        GUILayout.EndHorizontal();
 
-        GUILayout.EndScrollView();
-        //GUILayout.EndHorizontal();
-        GUILayout.BeginHorizontal();
-        GUILayout.Space(20);
-        GUILayout.EndHorizontal();
-        GUILayout.Space(20);
-        if (GUI.Button(new Rect(windowPosition.width - 42, 0, 21, 21), "S"))
-            KSPScienceSettings.Toggle();
-        if (GUI.Button(new Rect(windowPosition.width - 21, 0, 21, 21), "X"))
-            Hide();
-        if (GUI.RepeatButton(new Rect(windowPosition.width - 21, windowPosition.height - 21, 21, 21), "\u21d8"))
-            resizingWindow = true;
-        GUI.DragWindow(new Rect(0, 0, 10000, 20));
-    }
+        public void OnDestroy()
+        {
+            //print("Destroy Science Monitor");
+            RenderingManager.RemoveFromPostDrawQueue(2, OnDraw);
+        }
 
-    public void OnDestroy()
-    {
-        //print("Destroy Science Monitor");
-        RenderingManager.RemoveFromPostDrawQueue(2, OnDraw);
-    }
+        public static void Hide()
+        {
+            drawWindow = false;
+            KSPScienceSettings.Hide();
+        }
 
-    public static void Hide()
-    {
-        drawWindow = false;
-        KSPScienceSettings.Hide();
-    }
-
-    public static void Show()
-    {
-        drawWindow = true;
+        public static void Show()
+        {
+            drawWindow = true;
+        }
     }
 }
